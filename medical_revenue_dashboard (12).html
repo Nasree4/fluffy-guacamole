@@ -1,0 +1,1430 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบสรุปรายงานและวิเคราะห์รายได้ทางการแพทย์ (Medical Revenue Dashboard)</title>
+    
+    <!-- Google Fonts: Kanit & Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Kanit', 'Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            900: '#312e81',
+                        },
+                        medical: {
+                            teal: '#0d9488',
+                            emerald: '#10b981',
+                            amber: '#f59e0b',
+                            rose: '#f43f5e',
+                            violet: '#8b5cf6',
+                            cyan: '#06b6d4'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Chart.js for Responsive Data Visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- PapaParse for Parsing CSV Client-Side -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Kanit', 'Inter', sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+        }
+
+        /* Glassmorphism Card Style */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        .gradient-card-1 { background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); }
+        .gradient-card-2 { background: linear-gradient(135deg, #0d9488 0%, #059669 100%); }
+        .gradient-card-3 { background: linear-gradient(135deg, #d97706 0%, #ea580c 100%); }
+        .gradient-card-4 { background: linear-gradient(135deg, #2563eb 0%, #0891b2 100%); }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* Print Media Styling for Formal PDF/Paper Export */
+        @media print {
+            body {
+                background: white !important;
+                color: black !important;
+                font-size: 11pt;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .print-only {
+                display: block !important;
+            }
+            .page-break {
+                page-break-before: always;
+            }
+            .shadow-lg, .shadow-md, .shadow-sm, .glass-card {
+                box-shadow: none !important;
+                border: 1px solid #e2e8f0 !important;
+            }
+            canvas {
+                max-height: 280px !important;
+            }
+        }
+
+        .print-only {
+            display: none;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Toast Notification Banner -->
+    <div id="toastNotification" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 ease-in-out bg-slate-900 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center space-x-3 max-w-md pointer-events-none">
+        <i id="toastIcon" class="fa-solid fa-circle-check text-emerald-400 text-xl"></i>
+        <span id="toastMessage" class="text-xs sm:text-sm font-medium">แจ้งเตือนระบบ</span>
+    </div>
+
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center text-white shadow-md shadow-indigo-200">
+                    <i class="fa-solid fa-hospital-user text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold text-slate-800 leading-tight">แดชบอร์ดสรุปรายได้และสถิติทางการแพทย์</h1>
+                    <p class="text-xs text-slate-500 font-medium">สรุปข้อมูลไตรมาส 4 (ตุลาคม - ธันวาคม 2568)</p>
+                </div>
+            </div>
+
+            <!-- Action Controls -->
+            <div class="flex items-center space-x-2 sm:space-x-3">
+                <!-- Google Sheet Sync Button -->
+                <button onclick="openGoogleSheetModal()" class="inline-flex items-center px-3.5 py-2 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-sm font-medium transition shadow-sm border border-emerald-200">
+                    <i class="fa-solid fa-table text-emerald-600 mr-2 text-base"></i>
+                    <span class="hidden sm:inline">ดึงข้อมูล Google Sheet</span>
+                    <span class="sm:hidden">Google Sheet</span>
+                </button>
+
+                <!-- CSV Upload Button -->
+                <label for="csvFileInput" class="cursor-pointer inline-flex items-center px-3.5 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium transition shadow-sm">
+                    <i class="fa-solid fa-file-csv text-emerald-600 mr-2 text-base"></i>
+                    <span class="hidden sm:inline">นำเข้า CSV</span>
+                    <span class="sm:hidden">CSV</span>
+                </label>
+                <input type="file" id="csvFileInput" accept=".csv" class="hidden" onchange="handleFileUpload(event)">
+
+                <!-- Reset Data Button -->
+                <button onclick="loadSampleData()" class="inline-flex items-center px-3.5 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium transition shadow-sm" title="โหลดข้อมูลตัวอย่าง">
+                    <i class="fa-solid fa-rotate-left mr-2 text-indigo-600"></i>
+                    <span class="hidden sm:inline">ข้อมูลตัวอย่าง</span>
+                </button>
+
+                <!-- Print Report Button -->
+                <button onclick="window.print()" class="inline-flex items-center px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition shadow-md shadow-indigo-200">
+                    <i class="fa-solid fa-print mr-2"></i>
+                    <span>พิมพ์รายงาน</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Print Header (Visible only on print) -->
+    <div class="print-only p-6 border-b border-slate-300 mb-6">
+        <div class="flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold text-slate-900">รายงานสรุปรายได้ทางการแพทย์ สถิติการรับบริการ และสิทธิการรักษา</h1>
+                <p class="text-sm text-slate-600">สรุปข้อมูลเปรียบเทียบ รายเดือน / สิทธิการรักษา / ผลการวินิจฉัย (ต.ค. - ธ.ค. 2568)</p>
+            </div>
+            <div class="text-right text-xs text-slate-500">
+                <p>วันที่ออกรายงาน: <span id="printDate"></span></p>
+                <p>สถานะข้อมูล: สมบูรณ์</p>
+            </div>
+        </div>
+    </div>
+
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+        <!-- Active Data Source Notification & Drag-Drop Bar -->
+        <div id="dropZone" class="no-print border-2 border-dashed border-indigo-200 hover:border-indigo-500 bg-indigo-50/50 hover:bg-indigo-50 transition-all rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-indigo-900 cursor-pointer" onclick="document.getElementById('csvFileInput').click()">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+                    <i class="fa-solid fa-cloud-arrow-up text-lg"></i>
+                </div>
+                <div>
+                    <p class="font-bold text-sm text-slate-800" id="dataSourceTitle">อัปโหลดไฟล์ CSV หรือเชื่อมต่อ Google Sheet เพื่อวิเคราะห์ข้อมูล</p>
+                    <p class="text-slate-500" id="dataSourceText">กำลังใช้ข้อมูลตัวอย่าง (ต.ค. - ธ.ค. 2568) | ลากไฟล์ .csv มาวางตรงนี้ หรือคลิกเพื่อเลือกไฟล์</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-2">
+                <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span class="font-semibold text-indigo-600 hover:underline">นำเข้าข้อมูล</span>
+            </div>
+        </div>
+
+        <!-- Filter Control Bar -->
+        <section class="glass-card rounded-2xl p-4 sm:p-5 no-print relative z-20">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div class="flex items-center space-x-2 text-slate-700 font-semibold text-sm">
+                    <i class="fa-solid fa-filter text-indigo-500"></i>
+                    <span>ตัวกรองข้อมูล:</span>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full md:w-auto">
+                    <!-- Date Range Filter (Custom Date Range) -->
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">กำหนดช่วงเวลาเอง (วัน/เดือน/ปี)</label>
+                        <div class="flex items-center space-x-1.5">
+                            <input type="date" id="startDateInput" onchange="applyFilters()" class="w-full bg-white border border-slate-200 rounded-xl px-2.5 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-slate-700 font-medium shadow-sm">
+                            <span class="text-slate-400 font-bold text-xs">ถึง</span>
+                            <input type="date" id="endDateInput" onchange="applyFilters()" class="w-full bg-white border border-slate-200 rounded-xl px-2.5 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-slate-700 font-medium shadow-sm">
+                        </div>
+                    </div>
+
+                    <!-- Right Scheme Filter -->
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">สิทธิการรักษา</label>
+                        <select id="filterRight" onchange="applyFilters()" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-slate-700 font-medium shadow-sm">
+                            <option value="ALL">สิทธิการรักษาทั้งหมด</option>
+                        </select>
+                    </div>
+
+                    <!-- Diagnosis Multi-Select Filter -->
+                    <div class="relative" id="diagnosisMultiSelectContainer">
+                        <label class="block text-xs font-medium text-slate-500 mb-1">เลือกผลการวินิจฉัย / โรค (เลือกได้หลายโรค)</label>
+                        <button type="button" id="diagnosisDropdownBtn" onclick="toggleDiagnosisDropdown(event)" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm text-left flex justify-between items-center focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-slate-700 font-medium shadow-sm">
+                            <span id="diagnosisDropdownText" class="truncate">ผลการวินิจฉัยทั้งหมด</span>
+                            <i class="fa-solid fa-chevron-down text-xs text-slate-400 ml-2"></i>
+                        </button>
+
+                        <!-- Multi-Select Dropdown Panel -->
+                        <div id="diagnosisDropdownPanel" class="hidden absolute right-0 mt-2 bg-white border border-slate-200 rounded-2xl shadow-2xl z-50 p-3.5 w-80 sm:w-80 md:w-96 max-w-[calc(100vw-2rem)] space-y-2">
+                            <!-- Search Inside Dropdown -->
+                            <div class="relative">
+                                <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+                                <input type="text" id="searchDiagInput" oninput="filterDiagListOptions()" placeholder="ค้นหาชื่อโรค/ผลการวินิจฉัย..." class="w-full bg-slate-50 border border-slate-200 rounded-lg pl-8 pr-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-700">
+                            </div>
+
+                            <!-- Actions Bar -->
+                            <div class="flex items-center justify-between text-xs text-slate-500 border-b border-slate-100 pb-2 pt-1 font-medium">
+                                <button type="button" onclick="selectAllDiagnoses()" class="text-indigo-600 hover:text-indigo-800 transition"><i class="fa-solid fa-check-double mr-1"></i>เลือกทั้งหมด</button>
+                                <span class="text-slate-300">|</span>
+                                <button type="button" onclick="deselectAllDiagnoses()" class="text-rose-500 hover:text-rose-700 transition"><i class="fa-solid fa-xmark mr-1"></i>ล้างทั้งหมด</button>
+                            </div>
+
+                            <!-- Checkbox Options List -->
+                            <div id="diagCheckboxContainer" class="overflow-y-auto max-h-56 space-y-1 pr-1 text-xs text-slate-700">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 relative z-10">
+            
+            <!-- KPI 1: Total Revenue -->
+            <div class="gradient-card-1 rounded-2xl p-5 text-white shadow-lg shadow-indigo-500/10 relative overflow-hidden">
+                <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-medium uppercase tracking-wider text-indigo-100">รายได้รวมทั้งหมด</span>
+                    <span class="p-2 rounded-xl bg-white/10 text-white"><i class="fa-solid fa-baht-sign"></i></span>
+                </div>
+                <div class="mt-3">
+                    <h2 class="text-2xl sm:text-3xl font-bold tracking-tight" id="kpiTotalRevenue">฿0</h2>
+                    <p class="text-xs text-indigo-100 mt-1 flex items-center" id="kpiRevenueSub">
+                        <i class="fa-solid fa-chart-line mr-1 text-emerald-300"></i> จากทั้งหมดทุกเคส
+                    </p>
+                </div>
+            </div>
+
+            <!-- KPI 2: Patient Visits Count -->
+            <div class="gradient-card-2 rounded-2xl p-5 text-white shadow-lg shadow-teal-500/10 relative overflow-hidden">
+                <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-medium uppercase tracking-wider text-teal-100">จำนวนครั้งที่มาบริการรวม</span>
+                    <span class="p-2 rounded-xl bg-white/10 text-white"><i class="fa-solid fa-users text-lg"></i></span>
+                </div>
+                <div class="mt-3">
+                    <h2 class="text-2xl sm:text-3xl font-bold tracking-tight" id="kpiTotalVisits">0 ครั้ง</h2>
+                    <p class="text-xs text-teal-100 mt-1 flex items-center" id="kpiVisitsSub">
+                        <i class="fa-solid fa-calendar-check mr-1"></i> ยอดรวมจำนวนครั้งการรับบริการ
+                    </p>
+                </div>
+            </div>
+
+            <!-- KPI 3: Average Revenue Per Visit -->
+            <div class="gradient-card-3 rounded-2xl p-5 text-white shadow-lg shadow-amber-500/10 relative overflow-hidden">
+                <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-medium uppercase tracking-wider text-amber-100">รายได้เฉลี่ยต่อเคส</span>
+                    <span class="p-2 rounded-xl bg-white/10 text-white"><i class="fa-solid fa-calculator"></i></span>
+                </div>
+                <div class="mt-3">
+                    <h2 class="text-2xl sm:text-3xl font-bold tracking-tight" id="kpiAvgRevenue">฿0</h2>
+                    <p class="text-xs text-amber-100 mt-1 flex items-center">
+                        <i class="fa-solid fa-scale-balanced mr-1"></i> เฉลี่ยต่อการรับบริการ 1 ครั้ง
+                    </p>
+                </div>
+            </div>
+
+            <!-- KPI 4: Top Revenue Generator -->
+            <div class="gradient-card-4 rounded-2xl p-5 text-white shadow-lg shadow-blue-500/10 relative overflow-hidden">
+                <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-medium uppercase tracking-wider text-blue-100">สิทธิรายได้สูงสุด</span>
+                    <span class="p-2 rounded-xl bg-white/10 text-white"><i class="fa-solid fa-award"></i></span>
+                </div>
+                <div class="mt-3">
+                    <h2 class="text-xl font-bold tracking-tight truncate" id="kpiTopRight">-</h2>
+                    <p class="text-xs text-blue-100 mt-1 flex items-center truncate" id="kpiTopRightSub">
+                        <i class="fa-solid fa-chart-pie mr-1"></i> สัดส่วนรายได้หลัก
+                    </p>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- Monthly Visit Count Summary Bar -->
+        <section class="grid grid-cols-1 sm:grid-cols-3 gap-3 no-print">
+            <div class="bg-white rounded-xl p-3.5 border border-slate-200 shadow-sm flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-9 h-9 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-sm">ต.ค.</div>
+                    <div>
+                        <p class="text-xs text-slate-500 font-medium">จำนวนครั้งที่มา (ตุลาคม)</p>
+                        <p class="text-base font-bold text-slate-800" id="monthCountOct">0 ครั้ง</p>
+                    </div>
+                </div>
+                <span id="monthPctOct" class="text-xs font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">0%</span>
+            </div>
+
+            <div class="bg-white rounded-xl p-3.5 border border-slate-200 shadow-sm flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-9 h-9 rounded-lg bg-teal-50 text-teal-600 flex items-center justify-center font-bold text-sm">พ.ย.</div>
+                    <div>
+                        <p class="text-xs text-slate-500 font-medium">จำนวนครั้งที่มา (พฤศจิกายน)</p>
+                        <p class="text-base font-bold text-slate-800" id="monthCountNov">0 ครั้ง</p>
+                    </div>
+                </div>
+                <span id="monthPctNov" class="text-xs font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">0%</span>
+            </div>
+
+            <div class="bg-white rounded-xl p-3.5 border border-slate-200 shadow-sm flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-9 h-9 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-sm">ธ.ค.</div>
+                    <div>
+                        <p class="text-xs text-slate-500 font-medium">จำนวนครั้งที่มา (ธันวาคม)</p>
+                        <p class="text-base font-bold text-slate-800" id="monthCountDec">0 ครั้ง</p>
+                    </div>
+                </div>
+                <span id="monthPctDec" class="text-xs font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">0%</span>
+            </div>
+        </section>
+
+        <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+            <!-- Chart 1: Monthly Income Trend -->
+            <div class="lg:col-span-2 glass-card rounded-2xl p-5 flex flex-col justify-between">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h3 class="font-bold text-slate-800 text-base">เปรียบเทียบรายได้และจำนวนครั้งที่มารับบริการรายเดือน</h3>
+                        <p class="text-xs text-slate-500">ตุลาคม - ธันวาคม 2568</p>
+                    </div>
+                    <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-600"> Monthly Trend</span>
+                </div>
+                <div class="relative w-full h-72 sm:h-80">
+                    <canvas id="monthlyChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Chart 2: Revenue Distribution by Rights -->
+            <div class="glass-card rounded-2xl p-5 flex flex-col justify-between">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h3 class="font-bold text-slate-800 text-base">สัดส่วนรายได้แยกตามสิทธิการรักษา</h3>
+                        <p class="text-xs text-slate-500">จำแนกตามประเภทสิทธิการรักษา</p>
+                    </div>
+                    <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-teal-50 text-teal-600">Rights %</span>
+                </div>
+                <div class="relative w-full h-72 sm:h-80 flex items-center justify-center">
+                    <canvas id="rightsChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Chart 3: Top 10 Diagnosis by Revenue -->
+            <div class="lg:col-span-3 glass-card rounded-2xl p-5">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h3 class="font-bold text-slate-800 text-base">10 อันดับผลการวินิจฉัย/โรค ที่ทำรายได้สูงสุด</h3>
+                        <p class="text-xs text-slate-500">จัดอันดับตามมูลค่ารายได้รวม (บาท)</p>
+                    </div>
+                    <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-50 text-amber-600">Top Diagnosis</span>
+                </div>
+                <div class="relative w-full h-80 sm:h-96">
+                    <canvas id="diagnosisChart"></canvas>
+                </div>
+            </div>
+
+        </section>
+
+        <section class="glass-card rounded-2xl p-5 space-y-4">
+            
+            <!-- Table Header Controls -->
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+                <div>
+                    <h3 class="font-bold text-slate-800 text-lg">สรุปตารางรายละเอียดเชิงลึก</h3>
+                    <p class="text-xs text-slate-500">จำแนกตามสิทธิการรักษาและผลการวินิจฉัย</p>
+                </div>
+
+                <!-- Tab Switching Buttons -->
+                <div class="inline-flex p-1 bg-slate-100 rounded-xl text-xs font-semibold">
+                    <button id="tabBtnDiagnosis" onclick="switchTab('diagnosis')" class="px-4 py-2 rounded-lg bg-white text-indigo-600 shadow-sm transition">
+                        <i class="fa-solid fa-stethoscope mr-1.5"></i>จำแนกตามผลการวินิจฉัย
+                    </button>
+                    <button id="tabBtnRights" onclick="switchTab('rights')" class="px-4 py-2 rounded-lg text-slate-600 hover:text-slate-900 transition">
+                        <i class="fa-solid fa-id-card mr-1.5"></i>จำแนกตามสิทธิการรักษา
+                    </button>
+                    <button id="tabBtnRaw" onclick="switchTab('raw')" class="px-4 py-2 rounded-lg text-slate-600 hover:text-slate-900 transition">
+                        <i class="fa-solid fa-list-check mr-1.5"></i>รายการทั้งหมด
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tab Content 1: Summary by Diagnosis -->
+            <div id="tabContentDiagnosis" class="overflow-x-auto">
+                <table class="w-full text-sm text-left text-slate-600">
+                    <thead class="text-xs text-slate-500 bg-slate-50 rounded-lg uppercase tracking-wider">
+                        <tr>
+                            <th class="px-4 py-3.5 rounded-l-lg">ผลการวินิจฉัย (Diagnosis)</th>
+                            <th class="px-4 py-3.5 text-center">จำนวนครั้งที่มา (ครั้ง)</th>
+                            <th class="px-4 py-3.5 text-center">% ของการมารับบริการ</th>
+                            <th class="px-4 py-3.5 text-right">รายได้รวม (บาท)</th>
+                            <th class="px-4 py-3.5 text-right">เฉลี่ย/ครั้ง (บาท)</th>
+                            <th class="px-4 py-3.5 text-center rounded-r-lg">% สัดส่วนรายได้</th>
+                        </tr>
+                    </thead>
+                    <tbody id="diagnosisTableBody" class="divide-y divide-slate-100 font-medium">
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Tab Content 2: Summary by Treatment Rights -->
+            <div id="tabContentRights" class="overflow-x-auto hidden">
+                <table class="w-full text-sm text-left text-slate-600">
+                    <thead class="text-xs text-slate-500 bg-slate-50 rounded-lg uppercase tracking-wider">
+                        <tr>
+                            <th class="px-4 py-3.5 rounded-l-lg">สิทธิการรักษา (Rights)</th>
+                            <th class="px-4 py-3.5 text-center">จำนวนครั้งที่มา (ครั้ง)</th>
+                            <th class="px-4 py-3.5 text-center">% ของการมารับบริการ</th>
+                            <th class="px-4 py-3.5 text-right">รายได้รวม (บาท)</th>
+                            <th class="px-4 py-3.5 text-right">เฉลี่ย/ครั้ง (บาท)</th>
+                            <th class="px-4 py-3.5 text-center rounded-r-lg">% สัดส่วนรายได้</th>
+                        </tr>
+                    </thead>
+                    <tbody id="rightsTableBody" class="divide-y divide-slate-100 font-medium">
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Tab Content 3: Raw Transaction Rows -->
+            <div id="tabContentRaw" class="overflow-x-auto hidden space-y-3">
+                <table class="w-full text-sm text-left text-slate-600">
+                    <thead class="text-xs text-slate-500 bg-slate-50 rounded-lg uppercase tracking-wider">
+                        <tr>
+                            <th class="px-4 py-3.5 rounded-l-lg">ลำดับ</th>
+                            <th class="px-4 py-3.5">วันที่ / เดือน</th>
+                            <th class="px-4 py-3.5">สิทธิการรักษา</th>
+                            <th class="px-4 py-3.5">ผลการวินิจฉัย / โรค</th>
+                            <th class="px-4 py-3.5 text-right rounded-r-lg">จำนวนเงิน (บาท)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="rawTableBody" class="divide-y divide-slate-100">
+                    </tbody>
+                </table>
+                <div class="flex items-center justify-between pt-2 text-xs text-slate-500">
+                    <span id="rawCountInfo">แสดงรายการที่ 1 ถึง 20</span>
+                    <div class="space-x-1">
+                        <button onclick="changePage(-1)" class="px-3 py-1 bg-slate-100 hover:bg-slate-200 rounded-md font-medium text-slate-700">ก่อนหน้า</button>
+                        <span id="pageIndicator" class="px-2 font-semibold">1</span>
+                        <button onclick="changePage(1)" class="px-3 py-1 bg-slate-100 hover:bg-slate-200 rounded-md font-medium text-slate-700">ถัดไป</button>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- Executive Summary Section for Printable PDF -->
+        <section class="print-only page-break mt-8">
+            <h2 class="text-xl font-bold text-slate-800 mb-2">สรุปวิเคราะห์สำหรับผู้บริหาร (Executive Summary)</h2>
+            <div class="border border-slate-300 rounded-lg p-4 space-y-2 text-sm text-slate-700 leading-relaxed">
+                <p><strong>1. ภาพรวมรายได้:</strong> ในช่วงไตรมาส 4 (ต.ค. - ธ.ค. 2568) สถานพยาบาลมีรายได้รวมทั้งสิ้น <span id="printTotalRevText" class="font-bold"></span> บาท จากการให้บริการทั้งหมด <span id="printTotalVisitsText" class="font-bold"></span> ครั้ง คิดเป็นรายได้เฉลี่ยต่อเคสเท่ากับ <span id="printAvgRevText" class="font-bold"></span> บาท</p>
+                <p><strong>2. สิทธิการรักษาหลัก:</strong> กลุ่มสิทธิการรักษาที่สร้างรายได้สูงสุดอันดับ 1 คือ <span id="printTopRightText" class="font-bold"></span> ซึ่งสะท้อนถึงกลุ่มผู้รับบริการหลักของสถานพยาบาล</p>
+                <p><strong>3. กลุ่มโรค/ผลการวินิจฉัยที่สำคัญ:</strong> กลุ่มผลการวินิจฉัยที่สร้างมูลค่ารายได้สูงสุด ได้แก่ <span id="printTopDiagText" class="font-bold"></span> ซึ่งเป็นกลุ่มโรคที่ควรให้ความสำคัญด้านการบริหารจัดการเวชภัณฑ์และการให้บริการอย่างต่อเนื่อง</p>
+            </div>
+
+            <!-- Signature block for printed document -->
+            <div class="mt-12 grid grid-cols-2 gap-8 text-center text-xs">
+                <div>
+                    <div class="border-b border-slate-400 w-48 mx-auto mb-2"></div>
+                    <p class="font-semibold text-slate-800">ผู้จัดทำรายงาน / เจ้าหน้าที่เวชสถิติ</p>
+                    <p class="text-slate-500">วันที่ .......... / .......... / ..........</p>
+                </div>
+                <div>
+                    <div class="border-b border-slate-400 w-48 mx-auto mb-2"></div>
+                    <p class="font-semibold text-slate-800">ผู้อำนวยการ / ผู้รับรองรายงาน</p>
+                    <p class="text-slate-500">วันที่ .......... / .......... / ..........</p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 mt-10 py-4 no-print">
+        <div class="max-w-7xl mx-auto px-4 text-center text-xs text-slate-500">
+            <p>© 2026 Medical Revenue & Hospital Data Analytics System. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Google Sheet Sync Modal -->
+    <div id="googleSheetModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4 no-print">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 relative">
+            <button onclick="closeGoogleSheetModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 text-lg">
+                <i class="fa-solid fa-xmark"></i>
+            </button>            
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-xl shrink-0">
+                    <i class="fa-solid fa-table"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold text-slate-800 text-base">ดึงข้อมูลจาก Google Sheet</h3>
+                    <p class="text-xs text-slate-500">ซิงก์ข้อมูลจาก Google Sheets ผ่าน URL ลิงก์แชร์</p>
+                </div>
+            </div>
+
+            <div class="space-y-3 pt-2">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">วาง URL / ลิงก์แชร์ Google Sheet:</label>
+                    <input type="text" id="googleSheetUrlInput" placeholder="https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMd..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 font-mono">
+                </div>
+
+                <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-900 space-y-1">
+                    <p class="font-bold flex items-center"><i class="fa-solid fa-circle-info mr-1.5 text-amber-600"></i> วิธีเตรียม Google Sheet ก่อนเชื่อมต่อ:</p>
+                    <ol class="list-decimal list-inside space-y-0.5 text-slate-700 text-[11px] pl-1 leading-relaxed">
+                        <li>เปิดไฟล์ Google Sheet ของคุณ</li>
+                        <li>กดปุ่ม <strong class="text-slate-900">"แชร์" (Share)</strong> ที่มุมขวาบน</li>
+                        <li>ปรับสิทธิ์การเข้าถึงเป็น <strong class="text-slate-900">"ทุกคนที่มีลิงก์" (Anyone with the link)</strong></li>
+                        <li>คัดลอกลิงก์มาวางในช่องด้านบน แล้วกดเชื่อมต่อ</li>
+                    </ol>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between pt-3 border-t border-slate-100">
+                <button onclick="fillSampleGSheetUrl()" class="text-xs text-indigo-600 hover:text-indigo-800 font-medium hover:underline">
+                    <i class="fa-solid fa-vial mr-1"></i>ทดสอบด้วยลิงก์ตัวอย่าง
+                </button>
+                <div class="flex items-center space-x-2">
+                    <button onclick="closeGoogleSheetModal()" class="px-4 py-2 rounded-xl text-xs font-medium text-slate-600 hover:bg-slate-100 transition">ยกเลิก</button>
+                    <button onclick="loadDataFromGoogleSheet()" id="btnConnectGSheet" class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-md shadow-emerald-200 transition flex items-center">
+                        <i class="fa-solid fa-link mr-1.5"></i>
+                        <span>เชื่อมต่อและดึงข้อมูล</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Master List of Diagnoses
+        const userProvidedDiagnoses = [
+            "Pain localized to upper abdomen",
+            "ลมปลายปัตคาดสัญญาณ 3 หลัง",
+            "ลมปลายปัตคาดสัญญาณ 4 หลัง / คอ",
+            "อัมพฤกษ์ หรือ ลมอัมพฤกษ์",
+            "Acute nasopharyngitis [common cold]",
+            "ลมจับโปงแห้งเข่า",
+            "แขนท่อนบน",
+            "Dizziness and giddiness",
+            "ลมปลายปัตคาดขา",
+            "หัวไหล่ติด หรือ หัวไหล่อักเสบ",
+            "ลมปลายปัตคาดสัญญาณ 1 หลัง",
+            "Care involving use of rehabilitation  procedure, unsepcified",
+            "ลมปลายปัตคาดสัญญาณ 5 หลัง / คอ",
+            "ลมปลายปัตคาดโค้งคอ",
+            "ความผิดปกติชนิดอื่นของสตรีตั้งครรภ์และหลังคลอด, ที่ระบุรายละเอียด",
+            "ลมปลายปัตคาดส้นเท้า",
+            "Tinea pedis",
+            "First degree haemorrhoids",
+            "ลมจับโปงแห้งข้อเท้า",
+            "ปวดกล้ามเนื้อ",
+            "ตกหมอน หรือ คอเคล็ด",
+            "Crohn's disease, unspecified",
+            "ลมปลายปัตคาดข้อนิ้วมือ หรือ ลมปลายปัตคาดนิ้วไกปืน",
+            "ลมปลายปัตคาดแขน",
+            "ลมปลายปัตคาดไหล่",
+            "Constipation",
+            "Other physical therapy",
+            "หลายตำแหน่ง",
+            "ยอกหลัง",
+            "ลมปะกัง หรือ ลมตะกัง",
+            "ปัปผาสังพิการ หรือ ปอดพิการ",
+            "อัมพาตหน้า",
+            "หัวไหล่",
+            "Flaccid hemiplegia",
+            "Spastic hemiplegia",
+            "ริดสีดวงทวาร",
+            "Dyspepsia",
+            "Essential (primary) hypertension",
+            "Cough",
+            "การส่งเสริมสุขภาพและการป้องกันโรค ที่ไม่ระบุรายละเอียด",
+            "ลมจับโปงน้ำเข่า",
+            "ขาท่อนล่าง",
+            "ดานลม",
+            "สตรีหลังคลอดมีน้ำนมน้อย",
+            "การส่งเสริมสุขภาพและการป้องกันโรค",
+            "ลมปลายปัตคาดข้อศอก",
+            "ขากรรไกรค้าง",
+            "ดานเลือด",
+            "Other and unspecified gastroenteritis and colitis of infectious origin",
+            "อัมพาตครึ่งท่อนล่าง",
+            "โรคของเด็กอายุไม่เกิน 5 ปี, ไม่ระบุรายละเอียด",
+            "ความผิดปกติของสตรีตั้งครรภ์และหลังคลอด, ไม่ระบุรายละเอียด",
+            "ยอกหลัง, ไม่ระบุรายละเอียด",
+            "วิงเวียน",
+            "Stroke,not specified as haemorrhage or infarction",
+            "Anal abscess",
+            "Superficial injury of forearm, unspecified",
+            "Low back pain",
+            "Herpesviral infection, unspecified",
+            "สตรีหลังคลอดเต้านมคัดตึงผิดปกติ",
+            "ข้อเท้าแพลง",
+            "จุกเสียดแน่นท้อง",
+            "ยอกคู่",
+            "ลมจับโปงน้ำข้อเท้า",
+            "ข้อเท้าและเท้า",
+            "มดลูกด่ำ",
+            "Examination for driving licence",
+            "อัมพาต, ไม่ระบุรายละเอียด",
+            "Nonorganic insomnia",
+            "เสมหะพิการ",
+            "Attention to surgical dressings and sutures",
+            "Gonarthrosis, unspecified",
+            "บรเวณเอว",
+            "โรคภูมิแพ้",
+            "ชา",
+            "ท้องอืด",
+            "ลมลำบองสัญญาณ 4 หลัง / คอ",
+            "Procedure not carried out because of patient's decitsion for other and unsepcified reasons"
+        ];
+
+        // Global State
+        let rawDataset = [];
+        let filteredDataset = [];
+        let currentPage = 1;
+        const pageSize = 20;
+
+        let allDiagnosesList = [];
+        let selectedDiagnoses = new Set();
+
+        // Chart Instances
+        let monthlyChartInstance = null;
+        let rightsChartInstance = null;
+        let diagnosisChartInstance = null;
+
+        function openGoogleSheetModal() {
+            const savedUrl = localStorage.getItem('lastGoogleSheetUrl') || '';
+            if (savedUrl) {
+                document.getElementById('googleSheetUrlInput').value = savedUrl;
+            }
+            document.getElementById('googleSheetModal').classList.remove('hidden');
+        }
+
+        function closeGoogleSheetModal() {
+            document.getElementById('googleSheetModal').classList.add('hidden');
+        }
+
+        function fillSampleGSheetUrl() {
+            // Sample test spreadsheet URL
+            const sampleUrl = "https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMd1A3M3T_z3M8X8m1M/edit?usp=sharing";
+            document.getElementById('googleSheetUrlInput').value = sampleUrl;
+            showToast("กรอกลิงก์ตัวอย่างแล้ว กดปุ่มเชื่อมต่อได้ทันที", "info");
+        }
+
+        async function loadDataFromGoogleSheet() {
+            const rawUrl = document.getElementById('googleSheetUrlInput').value.trim();
+            if (!rawUrl) {
+                showToast("กรุณากรอก URL ของ Google Sheet", "warning");
+                return;
+            }
+
+            const match = rawUrl.match(/\/d\/([a-zA-Z0-9-_]+)/);
+            if (!match) {
+                showToast("รูปแบบ URL ของ Google Sheet ไม่ถูกต้อง", "warning");
+                return;
+            }
+
+            const sheetId = match[1];
+            let gid = '';
+            const gidMatch = rawUrl.match(/[?&]gid=([0-9]+)/) || rawUrl.match(/#gid=([0-9]+)/);
+            if (gidMatch) {
+                gid = gidMatch[1];
+            }
+
+            let csvExportUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv`;
+            if (gid) {
+                csvExportUrl += `&gid=${gid}`;
+            }
+
+            const btn = document.getElementById('btnConnectGSheet');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin mr-1.5"></i> กำลังดึงข้อมูล...`;
+            btn.disabled = true;
+
+            try {
+                const response = await fetch(csvExportUrl);
+                if (!response.ok) {
+                    throw new Error(`ไม่สามารถเข้าถึงไฟล์ได้ (Status: ${response.status}) โปรดตรวจสอบสิทธิ์การแชร์ลิงก์`);
+                }
+                const csvText = await response.text();
+                
+                if (!csvText || csvText.trim().toLowerCase().startsWith("<!doctype html")) {
+                    throw new Error("ไฟล์ล็อกอยู่ โปรดเปิดสิทธิ์แชร์เป็น 'ทุกคนที่มีลิงก์' (Anyone with the link)");
+                }
+
+                localStorage.setItem('lastGoogleSheetUrl', rawUrl);
+                closeGoogleSheetModal();
+
+                processCSVContent(csvText, `Google Sheet (${sheetId.substring(0, 6)}...)`);
+            } catch (error) {
+                showToast(error.message, "warning");
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        function normalizeMonth(mStr) {
+            if (!mStr) return 'ตุลาคม';
+            const s = String(mStr).trim().toLowerCase();
+            if (s.includes('10') || s.includes('ต.ค') || s.includes('oct')) return 'ตุลาคม';
+            if (s.includes('11') || s.includes('พ.ย') || s.includes('nov')) return 'พฤศจิกายน';
+            if (s.includes('12') || s.includes('ธ.ค') || s.includes('dec')) return 'ธันวาคม';
+            return 'ตุลาคม';
+        }
+
+        function processCSVContent(csvSource, sourceName = "ไฟล์นำเข้า") {
+            Papa.parse(csvSource, {
+                header: true,
+                skipEmptyLines: true,
+                encoding: "UTF-8",
+                complete: function(results) {
+                    if (!results.data || results.data.length === 0) {
+                        showToast("ไม่พบข้อมูลในตาราง หรือไฟล์ว่างเปล่า", "warning");
+                        return;
+                    }
+
+                    const firstRow = results.data[0];
+                    const cleanKeys = {};
+                    Object.keys(firstRow).forEach(k => {
+                        const cleanK = k.replace(/^\uFEFF/, '').trim();
+                        cleanKeys[cleanK] = k;
+                    });
+
+                    function findCol(patterns) {
+                        for (let p of patterns) {
+                            for (let cleanK in cleanKeys) {
+                                if (cleanK.toLowerCase().includes(p.toLowerCase())) {
+                                    return cleanKeys[cleanK];
+                                }
+                            }
+                        }
+                        return null;
+                    }
+
+                    const dateCol = findCol(['วันที่', 'date', 'วัน/เดือน/ปี']);
+                    const monthCol = findCol(['เดือน', 'month', 'ต.ค', 'พ.ย', 'ธ.ค']);
+                    const rightCol = findCol(['สิทธิ', 'right', 'payer', 'coverage']);
+                    const diagCol = findCol(['ผลการวินิจฉัย', 'วินิจฉัย', 'diagnosis', 'icd', 'โรค']);
+                    const amountCol = findCol(['จำนวนเงิน', 'รายได้', 'ราคา', 'ค่ารักษา', 'amount', 'price', 'cost', 'revenue', 'baht', 'บาท']);
+
+                    const parsedList = [];
+                    let idCounter = 1;
+
+                    results.data.forEach(row => {
+                        let rawMonth = monthCol ? row[monthCol] : 'ตุลาคม';
+                        let month = normalizeMonth(rawMonth);
+                        
+                        let rawDate = dateCol ? String(row[dateCol]).trim() : '';
+                        let dateIso = '2025-10-15';
+                        let dateDisplay = rawDate || '01/10/2568';
+
+                        if (month === 'ตุลาคม') dateIso = '2025-10-15';
+                        else if (month === 'พฤศจิกายน') dateIso = '2025-11-15';
+                        else if (month === 'ธันวาคม') dateIso = '2025-12-15';
+
+                        let right = rightCol && row[rightCol] ? String(row[rightCol]).trim() : 'สิทธิทั่วไป/ชำระเงินเอง';
+                        let diagnosis = diagCol && row[diagCol] ? String(row[diagCol]).trim() : 'ไม่ระบุผลการวินิจฉัย';
+                        
+                        let rawAmt = amountCol ? row[amountCol] : 0;
+                        if (typeof rawAmt === 'string') {
+                            rawAmt = rawAmt.replace(/,/g, '').replace(/฿/g, '').trim();
+                        }
+                        let amount = parseFloat(rawAmt) || 850;
+
+                        if (diagnosis && diagnosis !== '') {
+                            parsedList.push({
+                                id: idCounter++,
+                                dateIso: dateIso,
+                                dateDisplay: dateDisplay,
+                                month: month,
+                                right: right,
+                                diagnosis: diagnosis,
+                                amount: amount
+                            });
+                        }
+                    });
+
+                    if (parsedList.length > 0) {
+                        rawDataset = parsedList;
+                        populateRightFilterOptions();
+                        populateDiagnosisFilterOptions();
+                        applyFilters();
+
+                        document.getElementById('dataSourceTitle').innerText = `กำลังเชื่อมต่อข้อมูลจาก: ${sourceName}`;
+                        document.getElementById('dataSourceText').innerText = `ดึงและประมวลผลข้อมูลสำเร็จทั้งหมด ${parsedList.length.toLocaleString()} รายการ`;
+                        showToast(`นำเข้าข้อมูลสำเร็จ (${parsedList.length.toLocaleString()} รายการ)`, "success");
+                    } else {
+                        showToast("โครงสร้างคอลัมน์ไม่ถูกต้อง โปรดตรวจสอบชื่อหัวตาราง", "warning");
+                    }
+                },
+                error: function(err) {
+                    showToast("เกิดข้อผิดพลาดในการประมวลผลข้อมูล: " + err.message, "warning");
+                }
+            });
+        }
+
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                processCSVContent(file, file.name);
+            }
+        }
+
+        function generateSampleData() {
+            const rightsOptions = [
+                'ข้าราชการ/เบิกตรง',
+                'ประกันสังคม',
+                'หลักประกันสุขภาพถั่วหน้า (บัตรทอง)',
+                'ชำระเงินเอง',
+                'ประกันชีวิตเอกชน'
+            ];
+
+            const rightWeights = [0.45, 0.25, 0.15, 0.10, 0.05];
+
+            const monthDistribution = [
+                { month: 'ตุลาคม', count: 2210, datePrefix: '2025-10-' },
+                { month: 'พฤศจิกายน', count: 2325, datePrefix: '2025-11-' },
+                { month: 'ธันวาคม', count: 2400, datePrefix: '2025-12-' }
+            ];
+
+            const sampleList = [];
+            let idCounter = 1;
+
+            monthDistribution.forEach(mInfo => {
+                for (let i = 0; i < mInfo.count; i++) {
+                    const dayNum = Math.floor(Math.random() * 28) + 1;
+                    const dayStr = dayNum < 10 ? '0' + dayNum : '' + dayNum;
+                    const dateIso = mInfo.datePrefix + dayStr;
+                    const dateDisplay = `${dayStr}/${mInfo.datePrefix.substring(5,7)}/2568`;
+
+                    const diagIndex = Math.floor(Math.random() * userProvidedDiagnoses.length);
+                    const diag = userProvidedDiagnoses[diagIndex];
+
+                    const randRight = Math.random();
+                    let cum = 0;
+                    let selectedRight = rightsOptions[0];
+                    for (let r = 0; r < rightsOptions.length; r++) {
+                        cum += rightWeights[r];
+                        if (randRight <= cum) {
+                            selectedRight = rightsOptions[r];
+                            break;
+                        }
+                    }
+
+                    let baseAmt = 800;
+                    if (selectedRight === 'ข้าราชการ/เบิกตรง') baseAmt = 1150;
+                    else if (selectedRight === 'ประกันชีวิตเอกชน') baseAmt = 1800;
+                    else if (selectedRight === 'ประกันสังคม') baseAmt = 750;
+
+                    const variance = (Math.random() * 400) - 200;
+                    const amount = Math.max(300, Math.round(baseAmt + variance));
+
+                    sampleList.push({
+                        id: idCounter++,
+                        dateIso: dateIso,
+                        dateDisplay: dateDisplay,
+                        month: mInfo.month,
+                        right: selectedRight,
+                        diagnosis: diag,
+                        amount: amount
+                    });
+                }
+            });
+
+            return sampleList;
+        }
+
+        function loadSampleData() {
+            rawDataset = generateSampleData();
+            
+            document.getElementById('startDateInput').value = '2025-10-01';
+            document.getElementById('endDateInput').value = '2025-12-31';
+
+            populateRightFilterOptions();
+            populateDiagnosisFilterOptions();
+            applyFilters();
+            
+            document.getElementById('dataSourceTitle').innerText = 'กำลังแสดงข้อมูลตัวอย่าง (ไตรมาส 4: 01/10/2568 - 31/12/2568)';
+            document.getElementById('dataSourceText').innerText = 'ยอดรวมทั้งสิ้น 6,935 ครั้งการรับบริการ | สามารถเชื่อมต่อ Google Sheet หรือเลือกช่วงเวลาได้';
+            showToast("โหลดข้อมูลตัวอย่างเรียบร้อยแล้ว (6,935 ครั้ง)", "success");
+        }
+
+        function populateRightFilterOptions() {
+            const selectEl = document.getElementById('filterRight');
+            selectEl.innerHTML = '<option value="ALL">สิทธิการรักษาทั้งหมด</option>';
+            const rights = Array.from(new Set(rawDataset.map(item => item.right))).sort((a,b) => a.localeCompare(b, 'th'));
+            rights.forEach(r => {
+                const opt = document.createElement('option');
+                opt.value = r;
+                opt.innerText = r;
+                selectEl.appendChild(opt);
+            });
+        }
+
+        function populateDiagnosisFilterOptions() {
+            allDiagnosesList = Array.from(new Set(rawDataset.map(item => item.diagnosis))).sort((a, b) => a.localeCompare(b, 'th'));
+            selectedDiagnoses = new Set(allDiagnosesList);
+            renderDiagCheckboxes(allDiagnosesList);
+            updateDiagnosisDropdownText();
+        }
+
+        function renderDiagCheckboxes(list) {
+            const container = document.getElementById('diagCheckboxContainer');
+            container.innerHTML = '';
+
+            if (list.length === 0) {
+                container.innerHTML = `<p class="text-slate-400 text-center py-2">ไม่พบผลการวินิจฉัย</p>`;
+                return;
+            }
+
+            list.forEach(diag => {
+                const label = document.createElement('label');
+                label.className = 'flex items-center space-x-2 py-1 px-1.5 hover:bg-slate-50 rounded cursor-pointer select-none';
+                
+                const isChecked = selectedDiagnoses.has(diag);
+                label.innerHTML = `
+                    <input type="checkbox" value="${diag}" ${isChecked ? 'checked' : ''} onchange="onDiagCheckboxChange(event)" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+                    <span class="truncate text-slate-700 font-medium">${diag}</span>
+                `;
+                container.appendChild(label);
+            });
+        }
+
+        function toggleDiagnosisDropdown(event) {
+            event.stopPropagation();
+            const panel = document.getElementById('diagnosisDropdownPanel');
+            panel.classList.toggle('hidden');
+        }
+
+        document.addEventListener('click', function(e) {
+            const container = document.getElementById('diagnosisMultiSelectContainer');
+            const panel = document.getElementById('diagnosisDropdownPanel');
+            if (container && !container.contains(e.target)) {
+                panel.classList.add('hidden');
+            }
+        });
+
+        function filterDiagListOptions() {
+            const query = document.getElementById('searchDiagInput').value.toLowerCase().trim();
+            const filtered = allDiagnosesList.filter(d => d.toLowerCase().includes(query));
+            renderDiagCheckboxes(filtered);
+        }
+
+        function onDiagCheckboxChange(event) {
+            const diag = event.target.value;
+            if (event.target.checked) {
+                selectedDiagnoses.add(diag);
+            } else {
+                selectedDiagnoses.delete(diag);
+            }
+            updateDiagnosisDropdownText();
+            applyFilters();
+        }
+
+        function selectAllDiagnoses() {
+            selectedDiagnoses = new Set(allDiagnosesList);
+            renderDiagCheckboxes(allDiagnosesList);
+            updateDiagnosisDropdownText();
+            applyFilters();
+        }
+
+        function deselectAllDiagnoses() {
+            selectedDiagnoses.clear();
+            renderDiagCheckboxes(allDiagnosesList);
+            updateDiagnosisDropdownText();
+            applyFilters();
+        }
+
+        function updateDiagnosisDropdownText() {
+            const textEl = document.getElementById('diagnosisDropdownText');
+            if (selectedDiagnoses.size === 0) {
+                textEl.innerText = 'ไม่ได้เลือกโรค (0)';
+            } else if (selectedDiagnoses.size === allDiagnosesList.length) {
+                textEl.innerText = 'ผลการวินิจฉัยทั้งหมด';
+            } else {
+                textEl.innerText = `เลือกแล้ว (${selectedDiagnoses.size} โรค)`;
+            }
+        }
+
+        function applyFilters() {
+            const startDate = document.getElementById('startDateInput').value;
+            const endDate = document.getElementById('endDateInput').value;
+            const selectedRight = document.getElementById('filterRight').value;
+
+            const isAllDiagsSelected = (selectedDiagnoses.size === 0) || (selectedDiagnoses.size === allDiagnosesList.length);
+
+            filteredDataset = rawDataset.filter(item => {
+                const matchDate = (!startDate || item.dateIso >= startDate) && (!endDate || item.dateIso <= endDate);
+                const matchRight = (selectedRight === 'ALL') || (item.right === selectedRight);
+                const matchDiag = isAllDiagsSelected ? true : selectedDiagnoses.has(item.diagnosis);
+
+                return matchDate && matchRight && matchDiag;
+            });
+
+            currentPage = 1;
+            updateDashboardUI();
+        }
+
+        function updateDashboardUI() {
+            const totalRevenue = filteredDataset.reduce((sum, item) => sum + item.amount, 0);
+            const totalVisits = filteredDataset.length;
+            const avgRevenue = totalVisits > 0 ? totalRevenue / totalVisits : 0;
+
+            document.getElementById('kpiTotalRevenue').innerText = '฿' + formatBaht(totalRevenue);
+            document.getElementById('kpiTotalVisits').innerText = totalVisits.toLocaleString() + ' ครั้ง';
+            document.getElementById('kpiAvgRevenue').innerText = '฿' + formatBaht(avgRevenue);
+
+            // Calculate Top Right
+            const rightMap = {};
+            filteredDataset.forEach(item => {
+                rightMap[item.right] = (rightMap[item.right] || 0) + item.amount;
+            });
+            let topRightName = '-';
+            let topRightAmt = 0;
+            Object.keys(rightMap).forEach(r => {
+                if (rightMap[r] > topRightAmt) {
+                    topRightAmt = rightMap[r];
+                    topRightName = r;
+                }
+            });
+            document.getElementById('kpiTopRight').innerText = topRightName;
+            document.getElementById('kpiTopRightSub').innerText = 'รายได้ ฿' + formatBaht(topRightAmt);
+
+            // Monthly Visit Breakdown
+            let octCount = 0, novCount = 0, decCount = 0;
+            filteredDataset.forEach(item => {
+                if (item.month === 'ตุลาคม') octCount++;
+                else if (item.month === 'พฤศจิกายน') novCount++;
+                else if (item.month === 'ธันวาคม') decCount++;
+            });
+
+            document.getElementById('monthCountOct').innerText = octCount.toLocaleString() + ' ครั้ง';
+            document.getElementById('monthCountNov').innerText = novCount.toLocaleString() + ' ครั้ง';
+            document.getElementById('monthCountDec').innerText = decCount.toLocaleString() + ' ครั้ง';
+
+            const octPct = totalVisits > 0 ? ((octCount / totalVisits) * 100).toFixed(1) : 0;
+            const novPct = totalVisits > 0 ? ((novCount / totalVisits) * 100).toFixed(1) : 0;
+            const decPct = totalVisits > 0 ? ((decCount / totalVisits) * 100).toFixed(1) : 0;
+
+            document.getElementById('monthPctOct').innerText = octPct + '%';
+            document.getElementById('monthPctNov').innerText = novPct + '%';
+            document.getElementById('monthPctDec').innerText = decPct + '%';
+
+            // Print Text Updates
+            document.getElementById('printTotalRevText').innerText = formatBaht(totalRevenue);
+            document.getElementById('printTotalVisitsText').innerText = totalVisits.toLocaleString();
+            document.getElementById('printAvgRevText').innerText = formatBaht(avgRevenue);
+            document.getElementById('printTopRightText').innerText = topRightName;
+
+            renderCharts();
+            renderTables();
+        }
+
+        function renderCharts() {
+            // Chart 1: Monthly Trend
+            const months = ['ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
+            const monthlyRev = [0, 0, 0];
+            const monthlyVisits = [0, 0, 0];
+
+            filteredDataset.forEach(item => {
+                const idx = months.indexOf(item.month);
+                if (idx !== -1) {
+                    monthlyRev[idx] += item.amount;
+                    monthlyVisits[idx] += 1;
+                }
+            });
+
+            const ctxMonthly = document.getElementById('monthlyChart').getContext('2d');
+            if (monthlyChartInstance) monthlyChartInstance.destroy();
+            monthlyChartInstance = new Chart(ctxMonthly, {
+                type: 'bar',
+                data: {
+                    labels: months,
+                    datasets: [
+                        {
+                            label: 'รายได้รวม (บาท)',
+                            data: monthlyRev,
+                            backgroundColor: 'rgba(99, 102, 241, 0.85)',
+                            borderColor: '#4f46e5',
+                            borderWidth: 1,
+                            borderRadius: 8,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'จำนวนครั้งที่มา (ครั้ง)',
+                            data: monthlyVisits,
+                            type: 'line',
+                            borderColor: '#0d9488',
+                            backgroundColor: 'rgba(13, 148, 136, 0.2)',
+                            borderWidth: 3,
+                            pointRadius: 5,
+                            pointBackgroundColor: '#0d9488',
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            position: 'left',
+                            title: { display: true, text: 'รายได้ (บาท)', font: { family: 'Kanit' } },
+                            ticks: { callback: v => '฿' + (v >= 1000 ? (v/1000) + 'k' : v) }
+                        },
+                        y1: {
+                            type: 'linear',
+                            position: 'right',
+                            grid: { drawOnChartArea: false },
+                            title: { display: true, text: 'จำนวนครั้งที่มา (ครั้ง)', font: { family: 'Kanit' } }
+                        }
+                    },
+                    plugins: { legend: { labels: { font: { family: 'Kanit' } } } }
+                }
+            });
+
+            // Chart 2: Rights Doughnut
+            const rightsMap = {};
+            filteredDataset.forEach(item => {
+                rightsMap[item.right] = (rightsMap[item.right] || 0) + item.amount;
+            });
+
+            const rightsLabels = Object.keys(rightsMap);
+            const rightsData = Object.values(rightsMap);
+
+            const ctxRights = document.getElementById('rightsChart').getContext('2d');
+            if (rightsChartInstance) rightsChartInstance.destroy();
+            rightsChartInstance = new Chart(ctxRights, {
+                type: 'doughnut',
+                data: {
+                    labels: rightsLabels,
+                    datasets: [{
+                        data: rightsData,
+                        backgroundColor: ['#4f46e5', '#0d9488', '#d97706', '#2563eb', '#8b5cf6', '#ec4899']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { font: { family: 'Kanit', size: 11 } } }
+                    }
+                }
+            });
+
+            // Chart 3: Top 10 Diagnosis Horizontal Bar
+            const diagMap = {};
+            filteredDataset.forEach(item => {
+                diagMap[item.diagnosis] = (diagMap[item.diagnosis] || 0) + item.amount;
+            });
+
+            const sortedDiags = Object.keys(diagMap).sort((a,b) => diagMap[b] - diagMap[a]).slice(0, 10);
+            const topDiagData = sortedDiags.map(d => diagMap[d]);
+
+            if (sortedDiags.length > 0) {
+                document.getElementById('printTopDiagText').innerText = sortedDiags.slice(0, 3).join(', ');
+            } else {
+                document.getElementById('printTopDiagText').innerText = '-';
+            }
+
+            const ctxDiag = document.getElementById('diagnosisChart').getContext('2d');
+            if (diagnosisChartInstance) diagnosisChartInstance.destroy();
+            diagnosisChartInstance = new Chart(ctxDiag, {
+                type: 'bar',
+                data: {
+                    labels: sortedDiags,
+                    datasets: [{
+                        label: 'รายได้รวม (บาท)',
+                        data: topDiagData,
+                        backgroundColor: 'rgba(245, 158, 11, 0.85)',
+                        borderColor: '#d97706',
+                        borderWidth: 1,
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { ticks: { callback: v => '฿' + formatBaht(v) } }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        function renderTables() {
+            const totalRev = filteredDataset.reduce((s, i) => s + i.amount, 0);
+            const totalVisits = filteredDataset.length;
+
+            // 1. Diagnosis Table
+            const diagSummaryMap = {};
+            filteredDataset.forEach(item => {
+                if (!diagSummaryMap[item.diagnosis]) {
+                    diagSummaryMap[item.diagnosis] = { count: 0, amount: 0 };
+                }
+                diagSummaryMap[item.diagnosis].count += 1;
+                diagSummaryMap[item.diagnosis].amount += item.amount;
+            });
+
+            const sortedDiagKeys = Object.keys(diagSummaryMap).sort((a, b) => diagSummaryMap[b].amount - diagSummaryMap[a].amount);
+            const diagTbody = document.getElementById('diagnosisTableBody');
+            diagTbody.innerHTML = '';
+
+            sortedDiagKeys.forEach(diag => {
+                const info = diagSummaryMap[diag];
+                const visitPct = totalVisits > 0 ? ((info.count / totalVisits) * 100).toFixed(1) : 0;
+                const revPct = totalRev > 0 ? ((info.amount / totalRev) * 100).toFixed(1) : 0;
+                const avg = info.count > 0 ? info.amount / info.count : 0;
+
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50 transition';
+                tr.innerHTML = `
+                    <td class="px-4 py-3 font-semibold text-slate-800">${diag}</td>
+                    <td class="px-4 py-3 text-center font-bold text-indigo-600">${info.count.toLocaleString()}</td>
+                    <td class="px-4 py-3 text-center text-slate-500">${visitPct}%</td>
+                    <td class="px-4 py-3 text-right font-bold text-emerald-600">฿${formatBaht(info.amount)}</td>
+                    <td class="px-4 py-3 text-right text-slate-700">฿${formatBaht(avg)}</td>
+                    <td class="px-4 py-3 text-center font-semibold text-amber-600">${revPct}%</td>
+                `;
+                diagTbody.appendChild(tr);
+            });
+
+            // 2. Rights Table
+            const rightsSummaryMap = {};
+            filteredDataset.forEach(item => {
+                if (!rightsSummaryMap[item.right]) {
+                    rightsSummaryMap[item.right] = { count: 0, amount: 0 };
+                }
+                rightsSummaryMap[item.right].count += 1;
+                rightsSummaryMap[item.right].amount += item.amount;
+            });
+
+            const sortedRightKeys = Object.keys(rightsSummaryMap).sort((a, b) => rightsSummaryMap[b].amount - rightsSummaryMap[a].amount);
+            const rightTbody = document.getElementById('rightsTableBody');
+            rightTbody.innerHTML = '';
+
+            sortedRightKeys.forEach(r => {
+                const info = rightsSummaryMap[r];
+                const visitPct = totalVisits > 0 ? ((info.count / totalVisits) * 100).toFixed(1) : 0;
+                const revPct = totalRev > 0 ? ((info.amount / totalRev) * 100).toFixed(1) : 0;
+                const avg = info.count > 0 ? info.amount / info.count : 0;
+
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50 transition';
+                tr.innerHTML = `
+                    <td class="px-4 py-3 font-semibold text-slate-800">${r}</td>
+                    <td class="px-4 py-3 text-center font-bold text-indigo-600">${info.count.toLocaleString()}</td>
+                    <td class="px-4 py-3 text-center text-slate-500">${visitPct}%</td>
+                    <td class="px-4 py-3 text-right font-bold text-emerald-600">฿${formatBaht(info.amount)}</td>
+                    <td class="px-4 py-3 text-right text-slate-700">฿${formatBaht(avg)}</td>
+                    <td class="px-4 py-3 text-center font-semibold text-amber-600">${revPct}%</td>
+                `;
+                rightTbody.appendChild(tr);
+            });
+
+            // 3. Raw Transactions Table
+            renderRawTable();
+        }
+
+        function renderRawTable() {
+            const tbody = document.getElementById('rawTableBody');
+            tbody.innerHTML = '';
+
+            const totalCount = filteredDataset.length;
+            const totalPages = Math.ceil(totalCount / pageSize) || 1;
+
+            if (currentPage > totalPages) currentPage = totalPages;
+            if (currentPage < 1) currentPage = 1;
+
+            const startIndex = (currentPage - 1) * pageSize;
+            const pageData = filteredDataset.slice(startIndex, startIndex + pageSize);
+
+            if (pageData.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="text-center py-6 text-slate-400">ไม่พบข้อมูลในช่วงเวลาหรือเงื่อนไขที่เลือก</td></tr>`;
+            } else {
+                pageData.forEach((item, index) => {
+                    const row = document.createElement('tr');
+                    row.className = 'hover:bg-slate-50 transition text-xs sm:text-sm';
+                    row.innerHTML = `
+                        <td class="px-4 py-2.5 font-medium text-slate-400">${startIndex + index + 1}</td>
+                        <td class="px-4 py-2.5"><span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-medium">${item.dateDisplay || item.month}</span></td>
+                        <td class="px-4 py-2.5 font-medium text-indigo-600">${item.right}</td>
+                        <td class="px-4 py-2.5 font-semibold text-slate-800">${item.diagnosis}</td>
+                        <td class="px-4 py-2.5 text-right font-bold text-emerald-600">฿${formatBaht(item.amount)}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            }
+
+            document.getElementById('rawCountInfo').innerText = `แสดงรายการที่ ${totalCount > 0 ? startIndex + 1 : 0} ถึง ${Math.min(startIndex + pageSize, totalCount)} จากทั้งหมด ${totalCount.toLocaleString()} รายการ`;
+            document.getElementById('pageIndicator').innerText = `${currentPage} / ${totalPages}`;
+        }
+
+        function switchTab(tabName) {
+            document.getElementById('tabContentDiagnosis').classList.add('hidden');
+            document.getElementById('tabContentRights').classList.add('hidden');
+            document.getElementById('tabContentRaw').classList.add('hidden');
+
+            document.getElementById('tabBtnDiagnosis').className = 'px-4 py-2 rounded-lg text-slate-600 hover:text-slate-900 transition';
+            document.getElementById('tabBtnRights').className = 'px-4 py-2 rounded-lg text-slate-600 hover:text-slate-900 transition';
+            document.getElementById('tabBtnRaw').className = 'px-4 py-2 rounded-lg text-slate-600 hover:text-slate-900 transition';
+
+            if (tabName === 'diagnosis') {
+                document.getElementById('tabContentDiagnosis').classList.remove('hidden');
+                document.getElementById('tabBtnDiagnosis').className = 'px-4 py-2 rounded-lg bg-white text-indigo-600 shadow-sm transition';
+            } else if (tabName === 'rights') {
+                document.getElementById('tabContentRights').classList.remove('hidden');
+                document.getElementById('tabBtnRights').className = 'px-4 py-2 rounded-lg bg-white text-indigo-600 shadow-sm transition';
+            } else if (tabName === 'raw') {
+                document.getElementById('tabContentRaw').classList.remove('hidden');
+                document.getElementById('tabBtnRaw').className = 'px-4 py-2 rounded-lg bg-white text-indigo-600 shadow-sm transition';
+            }
+        }
+
+        function changePage(delta) {
+            currentPage += delta;
+            renderRawTable();
+        }
+
+        function formatBaht(num) {
+            return (num || 0).toLocaleString('th-TH', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toastNotification');
+            const icon = document.getElementById('toastIcon');
+            const msg = document.getElementById('toastMessage');
+
+            msg.innerText = message;
+            if (type === 'success') {
+                icon.className = 'fa-solid fa-circle-check text-emerald-400 text-xl';
+            } else if (type === 'warning') {
+                icon.className = 'fa-solid fa-triangle-exclamation text-amber-400 text-xl';
+            } else if (type === 'info') {
+                icon.className = 'fa-solid fa-circle-info text-blue-400 text-xl';
+            }
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3500);
+        }
+
+        // Drag & Drop Handling
+        function setupDragAndDrop() {
+            const dropZone = document.getElementById('dropZone');
+            if (!dropZone) return;
+
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, e => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }, false);
+            });
+
+            dropZone.addEventListener('drop', e => {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                if (files && files.length > 0) {
+                    processCSVContent(files[0], files[0].name);
+                }
+            });
+        }
+
+        window.onload = function() {
+            document.getElementById('printDate').innerText = new Date().toLocaleDateString('th-TH', {
+                year: 'numeric', month: 'long', day: 'numeric'
+            });
+
+            setupDragAndDrop();
+            loadSampleData();
+        };
+    </script>
+</body>
+</html>
