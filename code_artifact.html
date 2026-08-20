@@ -131,36 +131,36 @@
         <!-- Date & Service Shift Header Card -->
         <div class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200/80 hover:shadow-md transition-shadow">
           <div class="flex items-center gap-2 mb-4 pb-3 border-b border-slate-100">
-            <div class="w-3 h-3 rounded-full bg-emerald-500"></div>
-            <h2 class="text-base sm:text-lg font-bold text-slate-800">1. ข้อมูลทั่วไปการให้บริการ</h2>
+            <div class="w-3.5 h-3.5 rounded-full bg-emerald-500"></div>
+            <h2 class="text-base sm:text-xl font-bold text-slate-800">1. ข้อมูลทั่วไปการให้บริการ</h2>
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <!-- Date Input -->
             <div>
-              <label for="input-date" class="block text-sm font-medium text-slate-700 mb-1.5">วันที่ให้บริการ</label>
+              <label for="input-date" class="block text-sm sm:text-base font-semibold text-slate-700 mb-2">วันที่ให้บริการ</label>
               <div class="flex gap-2">
-                <input type="date" id="input-date" required class="flex-1 p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 text-sm focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all">
-                <button type="button" onclick="setQuickDate('today')" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-medium transition-colors">วันนี้</button>
-                <button type="button" onclick="setQuickDate('yesterday')" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-medium transition-colors">เมื่อวาน</button>
+                <input type="date" id="input-date" required class="flex-1 p-3 bg-slate-50 border-2 border-slate-300 rounded-xl text-slate-800 text-base font-medium focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all shadow-2xs">
+                <button type="button" onclick="setQuickDate('today')" class="px-4 py-3 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 rounded-xl text-sm font-bold border border-emerald-200/80 active:scale-95 transition-all shadow-2xs shrink-0">วันนี้</button>
+                <button type="button" onclick="setQuickDate('yesterday')" class="px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-sm font-bold border border-slate-200 active:scale-95 transition-all shadow-2xs shrink-0">เมื่อวาน</button>
               </div>
             </div>
 
             <!-- Service Shift -->
             <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1.5">ช่วงเวลาเข้ารับบริการ</label>
-              <div class="grid grid-cols-3 gap-2">
-                <label class="cursor-pointer border border-slate-200 rounded-xl p-2.5 flex items-center justify-center gap-2 hover:bg-slate-50 has-[:checked]:bg-emerald-50 has-[:checked]:border-emerald-500 has-[:checked]:text-emerald-800 transition-all">
+              <label class="block text-sm sm:text-base font-semibold text-slate-700 mb-2">ช่วงเวลาเข้ารับบริการ</label>
+              <div class="grid grid-cols-3 gap-2.5">
+                <label class="cursor-pointer border-2 border-slate-200 rounded-xl p-3 flex items-center justify-center gap-2 hover:bg-slate-50 has-[:checked]:bg-emerald-50 has-[:checked]:border-emerald-600 has-[:checked]:text-emerald-900 transition-all font-medium text-sm sm:text-base shadow-2xs">
                   <input type="radio" name="serviceTime" value="ในเวลา" checked class="w-4 h-4 text-emerald-600 focus:ring-emerald-500">
-                  <span class="text-sm font-medium">ในเวลา</span>
+                  <span>ในเวลา</span>
                 </label>
-                <label class="cursor-pointer border border-slate-200 rounded-xl p-2.5 flex items-center justify-center gap-2 hover:bg-slate-50 has-[:checked]:bg-emerald-50 has-[:checked]:border-emerald-500 has-[:checked]:text-emerald-800 transition-all">
+                <label class="cursor-pointer border-2 border-slate-200 rounded-xl p-3 flex items-center justify-center gap-2 hover:bg-slate-50 has-[:checked]:bg-emerald-50 has-[:checked]:border-emerald-600 has-[:checked]:text-emerald-900 transition-all font-medium text-sm sm:text-base shadow-2xs">
                   <input type="radio" name="serviceTime" value="นอกเวลา" class="w-4 h-4 text-emerald-600 focus:ring-emerald-500">
-                  <span class="text-sm font-medium">นอกเวลา</span>
+                  <span>นอกเวลา</span>
                 </label>
-                <label class="cursor-pointer border border-slate-200 rounded-xl p-2.5 flex items-center justify-center gap-2 hover:bg-slate-50 has-[:checked]:bg-emerald-50 has-[:checked]:border-emerald-500 has-[:checked]:text-emerald-800 transition-all">
+                <label class="cursor-pointer border-2 border-slate-200 rounded-xl p-3 flex items-center justify-center gap-2 hover:bg-slate-50 has-[:checked]:bg-emerald-50 has-[:checked]:border-emerald-600 has-[:checked]:text-emerald-900 transition-all font-medium text-sm sm:text-base shadow-2xs">
                   <input type="radio" name="serviceTime" value="เชิงรุก" class="w-4 h-4 text-emerald-600 focus:ring-emerald-500">
-                  <span class="text-sm font-medium">เชิงรุก</span>
+                  <span>เชิงรุก</span>
                 </label>
               </div>
             </div>
@@ -169,12 +169,12 @@
 
         <div class="space-y-4">
           <div class="flex items-center justify-between">
-            <h2 class="text-base sm:text-lg font-bold text-slate-800 flex items-center gap-2">
-              <div class="w-3 h-3 rounded-full bg-teal-500"></div>
+            <h2 class="text-base sm:text-xl font-bold text-slate-800 flex items-center gap-2">
+              <div class="w-3.5 h-3.5 rounded-full bg-teal-500"></div>
               <span>2. จำนวนผู้รับบริการแบ่งตามสิทธิการรักษา</span>
             </h2>
-            <button type="button" onclick="clearAllInputs()" class="text-xs text-slate-500 hover:text-red-600 flex items-center gap-1 transition-colors">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+            <button type="button" onclick="clearAllInputs()" class="text-xs sm:text-sm font-semibold text-slate-500 hover:text-red-600 flex items-center gap-1.5 px-3 py-1.5 rounded-xl hover:bg-red-50 border border-transparent hover:border-red-200 transition-all">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
               ล้างตัวเลขทั้งหมด
             </button>
           </div>
@@ -186,33 +186,33 @@
         </div>
 
         <!-- Cash Field -->
-        <div class="bg-gradient-to-br from-emerald-900 to-teal-900 text-white p-5 sm:p-6 rounded-2xl shadow-lg border border-emerald-700/50 relative overflow-hidden">
+        <div class="bg-gradient-to-br from-emerald-900 via-teal-900 to-emerald-950 text-white p-5 sm:p-7 rounded-2xl shadow-lg border border-emerald-700/50 relative overflow-hidden">
           <div class="absolute -right-8 -bottom-8 w-36 h-36 bg-emerald-500/10 rounded-full blur-2xl"></div>
           
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <label for="input-cash" class="block text-base sm:text-lg font-bold text-emerald-100 mb-1">
+              <label for="input-cash" class="block text-lg sm:text-xl font-bold text-emerald-100 mb-1">
                 3. เงินสดรับจริงรวมทั้งหมด (บาท)
               </label>
-              <p class="text-xs text-emerald-300 font-light">
+              <p class="text-xs sm:text-sm text-emerald-200/90 font-light">
                 รวมเงินสดที่เก็บส่งการเงิน + ค่านอกเวลา + ค่าบริการอื่นๆ
               </p>
             </div>
 
-            <div class="flex items-center gap-2 bg-black/30 p-2 rounded-xl border border-white/10 w-full sm:w-auto">
-              <span class="text-xl font-bold text-amber-300 pl-3">฿</span>
-              <input type="number" min="0" step="0.01" id="input-cash" placeholder="0.00" class="w-full sm:w-44 bg-transparent text-white text-2xl font-bold placeholder-emerald-700 focus:outline-none text-right pr-2">
+            <div class="flex items-center gap-3 bg-black/40 p-2.5 sm:p-3 rounded-2xl border border-white/15 w-full sm:w-auto shadow-inner">
+              <span class="text-2xl sm:text-3xl font-bold text-amber-300 pl-3">฿</span>
+              <input type="number" min="0" step="0.01" id="input-cash" placeholder="0.00" class="w-full sm:w-52 bg-transparent text-white text-2xl sm:text-3xl font-extrabold placeholder-emerald-700/80 focus:outline-none text-right pr-2">
             </div>
           </div>
         </div>
 
         <!-- Form Actions Bar -->
-        <div class="sticky bottom-4 z-20 flex items-center justify-center gap-3 bg-white/90 backdrop-blur-md p-3 sm:p-4 rounded-2xl shadow-xl border border-slate-200">
-          <button type="button" onclick="resetForm()" class="px-6 py-3 rounded-xl border border-slate-300 text-slate-700 font-medium hover:bg-slate-100 transition-colors text-sm">
+        <div class="sticky bottom-4 z-20 flex items-center justify-center gap-3 sm:gap-4 bg-white/95 backdrop-blur-md p-3.5 sm:p-5 rounded-2xl shadow-xl border border-slate-200/80">
+          <button type="button" onclick="resetForm()" class="px-6 py-3.5 rounded-xl border-2 border-slate-300 text-slate-700 font-bold hover:bg-slate-100 active:scale-95 transition-all text-sm sm:text-base">
             ล้างแบบฟอร์ม
           </button>
-          <button type="submit" id="btn-save-submit" class="px-8 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold rounded-xl shadow-lg shadow-emerald-600/30 hover:shadow-emerald-600/50 transition-all text-sm flex items-center gap-2">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
+          <button type="submit" id="btn-save-submit" class="px-8 sm:px-10 py-3.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-extrabold rounded-xl shadow-lg shadow-emerald-600/30 hover:shadow-emerald-600/50 active:scale-95 transition-all text-sm sm:text-base flex items-center gap-2.5">
+            <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
             <span>บันทึกข้อมูลบริการ</span>
           </button>
         </div>
@@ -297,7 +297,7 @@
           <div class="flex items-center gap-4 flex-wrap">
             <label class="inline-flex items-center gap-1.5 cursor-pointer text-slate-700 font-medium">
               <input type="radio" name="calcMode" value="specific" checked onchange="renderSummary()" class="text-emerald-600 focus:ring-emerald-500">
-              <span>รวมเฉพาะหัตถการหลัก (นวด, ประคบ, นวด+ประคบ, หลังคลอด, อบสมุนไพร) + เงินสด</span>
+              <span>รวมเฉพาะหัตถการหลัก (นวด, ประคบ, นวด+ประคบ, หลังคลอด, อบสมุนไพร, ยอด IMC) + เงินสด</span>
             </label>
             <label class="inline-flex items-center gap-1.5 cursor-pointer text-slate-700 font-medium">
               <input type="radio" name="calcMode" value="all" onchange="renderSummary()" class="text-emerald-600 focus:ring-emerald-500">
@@ -511,28 +511,28 @@
         title: 'สิทธิบัตรทอง (UC)',
         headerClass: 'bg-blue-100 text-blue-900',
         borderClass: 'border-blue-200',
-        fields: ['นวด+ประคบ', 'นวด(ไม่รวมหลังคลอด)', 'ประคบ', 'หลังคลอด', 'อบสมุนไพร', 'นวดเท้า', 'นวดตัว', 'นวดท้อง', 'พอกเข่า', 'จ่ายยา']
+        fields: ['นวด+ประคบ', 'นวด(ไม่รวมหลังคลอด)', 'ประคบ', 'หลังคลอด', 'อบสมุนไพร', 'ยอด IMC', 'นวดเท้า', 'นวดตัว', 'นวดท้อง', 'พอกเข่า', 'จ่ายยา']
       },
       social: {
         id: 'social',
         title: 'สิทธิประกันสังคม',
         headerClass: 'bg-amber-100 text-amber-900',
         borderClass: 'border-amber-200',
-        fields: ['นวด+ประคบ', 'นวด(ไม่รวมหลังคลอด)', 'ประคบ', 'หลังคลอด', 'อบสมุนไพร', 'นวดเท้า', 'นวดตัว', 'นวดท้อง', 'พอกเข่า', 'จ่ายยา']
+        fields: ['นวด+ประคบ', 'นวด(ไม่รวมหลังคลอด)', 'ประคบ', 'หลังคลอด', 'อบสมุนไพร', 'ยอด IMC', 'นวดเท้า', 'นวดตัว', 'นวดท้อง', 'พอกเข่า', 'จ่ายยา']
       },
       direct: {
         id: 'direct',
         title: 'สิทธิจ่ายตรง',
         headerClass: 'bg-emerald-100 text-emerald-900',
         borderClass: 'border-emerald-200',
-        fields: ['นวด+ประคบ', 'นวด(ไม่รวมหลังคลอด)', 'ประคบ', 'หลังคลอด', 'อบสมุนไพร', 'นวดเท้า', 'นวดตัว', 'นวดท้อง', 'พอกเข่า', 'จ่ายยา']
+        fields: ['นวด+ประคบ', 'นวด(ไม่รวมหลังคลอด)', 'ประคบ', 'หลังคลอด', 'อบสมุนไพร', 'ยอด IMC', 'นวดเท้า', 'นวดตัว', 'นวดท้อง', 'พอกเข่า', 'จ่ายยา']
       },
       self: {
         id: 'self',
         title: 'สิทธิชำระเงินเอง/อื่นๆ',
         headerClass: 'bg-purple-100 text-purple-900',
         borderClass: 'border-purple-200',
-        fields: ['นวด+ประคบ', 'นวด(ไม่รวมหลังคลอด)', 'ประคบ', 'หลังคลอด', 'อบสมุนไพร', 'นวดเท้า', 'นวดตัว', 'นวดท้อง', 'พอกเข่า', 'จ่ายยา']
+        fields: ['นวด+ประคบ', 'นวด(ไม่รวมหลังคลอด)', 'ประคบ', 'หลังคลอด', 'อบสมุนไพร', 'ยอด IMC', 'นวดเท้า', 'นวดตัว', 'นวดท้อง', 'พอกเข่า', 'จ่ายยา']
       }
     };
 
@@ -541,6 +541,7 @@
       'นวด+ประคบ': 250,
       'ประคบ': 150,
       'หลังคลอด': 670,
+      'ยอด IMC': 200,
       'นวดเท้า': 200,
       'นวดตัว': 300,
       'นวดท้อง': 100,
@@ -554,7 +555,8 @@
       'นวด(ไม่รวมหลังคลอด)',
       'ประคบ',
       'หลังคลอด',
-      'อบสมุนไพร'
+      'อบสมุนไพร',
+      'ยอด IMC'
     ];
 
     // Global State
@@ -897,20 +899,23 @@ function responseJSON(obj) {
 
       Object.values(CATEGORIES).forEach(cat => {
         const div = document.createElement('div');
-        div.className = `rounded-2xl border ${cat.borderClass} overflow-hidden bg-white shadow-xs`;
+        div.className = `rounded-2xl border ${cat.borderClass} overflow-hidden bg-white shadow-sm hover:shadow-md transition-shadow`;
         div.innerHTML = `
-          <div class="px-4 py-3 font-bold text-sm ${cat.headerClass} border-b border-slate-100 flex justify-between items-center">
-            <span>${cat.title}</span>
-            <button type="button" onclick="clearCategoryInputs('${cat.id}')" class="text-[11px] font-normal underline opacity-80 hover:opacity-100">ล้างหมวดนี้</button>
+          <div class="px-5 py-3.5 font-bold text-base ${cat.headerClass} border-b border-slate-100 flex justify-between items-center">
+            <span class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-current opacity-60"></span>
+              ${cat.title}
+            </span>
+            <button type="button" onclick="clearCategoryInputs('${cat.id}')" class="text-xs font-semibold px-2.5 py-1 rounded-lg bg-white/60 hover:bg-white text-slate-700 transition-colors border border-black/5 shadow-2xs">ล้างหมวดนี้</button>
           </div>
-          <div class="p-3.5 sm:p-4 grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3">
+          <div class="p-4 sm:p-5 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             ${cat.fields.map(f => `
-              <div class="flex items-center justify-between gap-2 p-1.5 bg-slate-50/50 rounded-xl border border-slate-100">
-                <label class="text-xs font-medium text-slate-700 truncate" title="${f}">${f}</label>
-                <div class="flex items-center gap-1 shrink-0">
-                  <button type="button" onclick="adjustCount('${cat.id}', '${f}', -1)" class="w-7 h-7 rounded-lg bg-slate-200 hover:bg-slate-300 active:scale-95 text-slate-700 font-bold text-sm flex items-center justify-center transition-all">-</button>
-                  <input type="number" min="0" placeholder="0" data-cat="${cat.id}" data-field="${f}" class="w-12 p-1 text-center font-semibold text-slate-800 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:bg-white outline-none">
-                  <button type="button" onclick="adjustCount('${cat.id}', '${f}', 1)" class="w-7 h-7 rounded-lg bg-emerald-100 hover:bg-emerald-200 active:scale-95 text-emerald-800 font-bold text-sm flex items-center justify-center transition-all">+</button>
+              <div class="flex flex-col items-center justify-center gap-2.5 p-3 sm:p-4 bg-slate-50 hover:bg-slate-100/70 rounded-2xl border border-slate-200/80 transition-all shadow-2xs text-center">
+                <label class="text-xs sm:text-sm font-bold text-slate-800 leading-snug w-full" title="${f}">${f}</label>
+                <div class="flex items-center justify-center gap-2 w-full">
+                  <button type="button" onclick="adjustCount('${cat.id}', '${f}', -1)" class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-slate-200 hover:bg-slate-300 active:scale-95 text-slate-700 font-bold text-xl flex items-center justify-center transition-all touch-manipulation shadow-2xs">-</button>
+                  <input type="number" min="0" placeholder="0" data-cat="${cat.id}" data-field="${f}" class="w-20 sm:w-24 py-2 sm:py-2.5 text-center font-bold text-slate-900 text-lg sm:text-xl border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:bg-white outline-none transition-all shadow-inner">
+                  <button type="button" onclick="adjustCount('${cat.id}', '${f}', 1)" class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xl flex items-center justify-center transition-all touch-manipulation shadow-sm">+</button>
                 </div>
               </div>
             `).join('')}
