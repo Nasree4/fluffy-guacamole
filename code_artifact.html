@@ -901,21 +901,21 @@ function responseJSON(obj) {
         const div = document.createElement('div');
         div.className = `rounded-2xl border ${cat.borderClass} overflow-hidden bg-white shadow-sm hover:shadow-md transition-shadow`;
         div.innerHTML = `
-          <div class="px-5 py-3.5 font-bold text-base ${cat.headerClass} border-b border-slate-100 flex justify-between items-center">
+          <div class="px-4 py-3 font-bold text-sm sm:text-base ${cat.headerClass} border-b border-slate-100 flex justify-between items-center">
             <span class="flex items-center gap-2">
               <span class="w-2.5 h-2.5 rounded-full bg-current opacity-60"></span>
               ${cat.title}
             </span>
-            <button type="button" onclick="clearCategoryInputs('${cat.id}')" class="text-xs font-semibold px-2.5 py-1 rounded-lg bg-white/60 hover:bg-white text-slate-700 transition-colors border border-black/5 shadow-2xs">ล้างหมวดนี้</button>
+            <button type="button" onclick="clearCategoryInputs('${cat.id}')" class="text-xs font-semibold px-2.5 py-1 rounded-lg bg-white/70 hover:bg-white text-slate-700 transition-colors border border-black/5 shadow-2xs">ล้างหมวดนี้</button>
           </div>
-          <div class="p-4 sm:p-5 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+          <div class="p-2.5 sm:p-4 grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3.5">
             ${cat.fields.map(f => `
-              <div class="flex flex-col items-center justify-center gap-2.5 p-3 sm:p-4 bg-slate-50 hover:bg-slate-100/70 rounded-2xl border border-slate-200/80 transition-all shadow-2xs text-center">
-                <label class="text-xs sm:text-sm font-bold text-slate-800 leading-snug w-full" title="${f}">${f}</label>
-                <div class="flex items-center justify-center gap-2 w-full">
-                  <button type="button" onclick="adjustCount('${cat.id}', '${f}', -1)" class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-slate-200 hover:bg-slate-300 active:scale-95 text-slate-700 font-bold text-xl flex items-center justify-center transition-all touch-manipulation shadow-2xs">-</button>
-                  <input type="number" min="0" placeholder="0" data-cat="${cat.id}" data-field="${f}" class="w-20 sm:w-24 py-2 sm:py-2.5 text-center font-bold text-slate-900 text-lg sm:text-xl border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:bg-white outline-none transition-all shadow-inner">
-                  <button type="button" onclick="adjustCount('${cat.id}', '${f}', 1)" class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xl flex items-center justify-center transition-all touch-manipulation shadow-sm">+</button>
+              <div class="flex flex-col items-center justify-between gap-1.5 p-2 sm:p-3 bg-slate-50/80 hover:bg-slate-100/80 rounded-xl border border-slate-200/80 transition-all shadow-2xs text-center">
+                <label class="text-[11px] sm:text-xs font-bold text-slate-800 leading-tight w-full truncate" title="${f}">${f}</label>
+                <div class="flex items-center justify-center gap-1 sm:gap-1.5 w-full mt-0.5">
+                  <button type="button" onclick="adjustCount('${cat.id}', '${f}', -1)" class="w-7 h-7 sm:w-9 sm:h-9 rounded-lg bg-slate-200/90 hover:bg-slate-300 active:scale-95 text-slate-700 font-bold text-sm sm:text-base flex items-center justify-center transition-all touch-manipulation shadow-2xs shrink-0">-</button>
+                  <input type="number" min="0" placeholder="0" data-cat="${cat.id}" data-field="${f}" class="w-10 sm:w-14 py-1 text-center font-extrabold text-slate-900 text-xs sm:text-base border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:bg-white outline-none transition-all shadow-inner">
+                  <button type="button" onclick="adjustCount('${cat.id}', '${f}', 1)" class="w-7 h-7 sm:w-9 sm:h-9 rounded-lg bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-sm sm:text-base flex items-center justify-center transition-all touch-manipulation shadow-xs shrink-0">+</button>
                 </div>
               </div>
             `).join('')}
