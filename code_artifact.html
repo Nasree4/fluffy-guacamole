@@ -297,7 +297,7 @@
           <div class="flex items-center gap-4 flex-wrap">
             <label class="inline-flex items-center gap-1.5 cursor-pointer text-slate-700 font-medium">
               <input type="radio" name="calcMode" value="specific" checked onchange="renderSummary()" class="text-emerald-600 focus:ring-emerald-500">
-              <span>รวมเฉพาะหัตถการหลัก (นวด, ประคบ, นวด+ประคบ, หลังคลอด, อบสมุนไพร, ยอด IMC) + เงินสด</span>
+              <span>รวมเฉพาะหัตถการหลัก (นวด, ประคบ, นวด+ประคบ (ไม่รวม IMC), หลังคลอด, อบสมุนไพร, ยอด IMC) + เงินสด</span>
             </label>
             <label class="inline-flex items-center gap-1.5 cursor-pointer text-slate-700 font-medium">
               <input type="radio" name="calcMode" value="all" onchange="renderSummary()" class="text-emerald-600 focus:ring-emerald-500">
@@ -362,7 +362,7 @@
       <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
         <h3 class="text-base font-bold text-slate-800 mb-4 flex items-center gap-2">
           <div class="w-2.5 h-2.5 rounded-full bg-emerald-500"></div>
-          <span>ประมาณการมูลค่าการให้บริการแยกตามสิทธิ (สิทธิจ่ายตรง: นวด+ประคบ และ หลังคลอด บวกเพิ่ม 61 บาท/เคส)</span>
+          <span>ประมาณการมูลค่าการให้บริการแยกตามสิทธิ (สิทธิจ่ายตรง: นวด+ประคบ (ไม่รวม IMC) และ หลังคลอด บวกเพิ่ม 61 บาท/เคส)</span>
         </h3>
         <div id="summary-rights-money" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <!-- Rendered by JS -->
@@ -511,34 +511,34 @@
         title: 'สิทธิบัตรทอง (UC)',
         headerClass: 'bg-blue-100 text-blue-900',
         borderClass: 'border-blue-200',
-        fields: ['นวด+ประคบ', 'นวด(ไม่รวมหลังคลอด)', 'ประคบ', 'หลังคลอด', 'อบสมุนไพร', 'ยอด IMC', 'นวดเท้า', 'นวดตัว', 'นวดท้อง', 'พอกเข่า', 'จ่ายยา']
+        fields: ['นวด+ประคบ (ไม่รวม IMC)', 'นวด', 'ประคบ', 'หลังคลอด', 'อบสมุนไพร', 'ยอด IMC', 'นวดเท้า', 'นวดตัว', 'นวดท้อง', 'พอกเข่า', 'จ่ายยา']
       },
       social: {
         id: 'social',
         title: 'สิทธิประกันสังคม',
         headerClass: 'bg-amber-100 text-amber-900',
         borderClass: 'border-amber-200',
-        fields: ['นวด+ประคบ', 'นวด(ไม่รวมหลังคลอด)', 'ประคบ', 'หลังคลอด', 'อบสมุนไพร', 'ยอด IMC', 'นวดเท้า', 'นวดตัว', 'นวดท้อง', 'พอกเข่า', 'จ่ายยา']
+        fields: ['นวด+ประคบ (ไม่รวม IMC)', 'นวด', 'ประคบ', 'หลังคลอด', 'อบสมุนไพร', 'ยอด IMC', 'นวดเท้า', 'นวดตัว', 'นวดท้อง', 'พอกเข่า', 'จ่ายยา']
       },
       direct: {
         id: 'direct',
         title: 'สิทธิจ่ายตรง',
         headerClass: 'bg-emerald-100 text-emerald-900',
         borderClass: 'border-emerald-200',
-        fields: ['นวด+ประคบ', 'นวด(ไม่รวมหลังคลอด)', 'ประคบ', 'หลังคลอด', 'อบสมุนไพร', 'ยอด IMC', 'นวดเท้า', 'นวดตัว', 'นวดท้อง', 'พอกเข่า', 'จ่ายยา']
+        fields: ['นวด+ประคบ (ไม่รวม IMC)', 'นวด', 'ประคบ', 'หลังคลอด', 'อบสมุนไพร', 'ยอด IMC', 'นวดเท้า', 'นวดตัว', 'นวดท้อง', 'พอกเข่า', 'จ่ายยา']
       },
       self: {
         id: 'self',
         title: 'สิทธิชำระเงินเอง/อื่นๆ',
         headerClass: 'bg-purple-100 text-purple-900',
         borderClass: 'border-purple-200',
-        fields: ['นวด+ประคบ', 'นวด(ไม่รวมหลังคลอด)', 'ประคบ', 'หลังคลอด', 'อบสมุนไพร', 'ยอด IMC', 'นวดเท้า', 'นวดตัว', 'นวดท้อง', 'พอกเข่า', 'จ่ายยา']
+        fields: ['นวด+ประคบ (ไม่รวม IMC)', 'นวด', 'ประคบ', 'หลังคลอด', 'อบสมุนไพร', 'ยอด IMC', 'นวดเท้า', 'นวดตัว', 'นวดท้อง', 'พอกเข่า', 'จ่ายยา']
       }
     };
 
     const ESTIMATED_RATES = {
-      'นวด(ไม่รวมหลังคลอด)': 200,
-      'นวด+ประคบ': 250,
+      'นวด': 200,
+      'นวด+ประคบ (ไม่รวม IMC)': 250,
       'ประคบ': 150,
       'หลังคลอด': 670,
       'ยอด IMC': 200,
@@ -551,8 +551,8 @@
     };
 
     const SPECIFIC_SERVICES = [
-      'นวด+ประคบ',
-      'นวด(ไม่รวมหลังคลอด)',
+      'นวด+ประคบ (ไม่รวม IMC)',
+      'นวด',
       'ประคบ',
       'หลังคลอด',
       'อบสมุนไพร',
@@ -672,7 +672,6 @@
         try {
           result = JSON.parse(text);
         } catch(e) {
-          // If response isn't strict JSON but request succeeded
           if (res.ok) {
             updateSheetsSyncStatus('connected', 'ซิงค์กับ Sheets เรียบร้อย');
             return;
@@ -908,14 +907,15 @@ function responseJSON(obj) {
             </span>
             <button type="button" onclick="clearCategoryInputs('${cat.id}')" class="text-xs font-semibold px-2.5 py-1 rounded-lg bg-white/70 hover:bg-white text-slate-700 transition-colors border border-black/5 shadow-2xs">ล้างหมวดนี้</button>
           </div>
-          <div class="p-2.5 sm:p-4 grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3.5">
+          <!-- Grid 1 col on mobile, 2 cols on sm/desktop to fit comfortably without overlap -->
+          <div class="p-3 sm:p-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
             ${cat.fields.map(f => `
-              <div class="flex flex-col items-center justify-between gap-1.5 p-2 sm:p-3 bg-slate-50/80 hover:bg-slate-100/80 rounded-xl border border-slate-200/80 transition-all shadow-2xs text-center">
-                <label class="text-[11px] sm:text-xs font-bold text-slate-800 leading-tight w-full truncate" title="${f}">${f}</label>
-                <div class="flex items-center justify-center gap-1 sm:gap-1.5 w-full mt-0.5">
-                  <button type="button" onclick="adjustCount('${cat.id}', '${f}', -1)" class="w-7 h-7 sm:w-9 sm:h-9 rounded-lg bg-slate-200/90 hover:bg-slate-300 active:scale-95 text-slate-700 font-bold text-sm sm:text-base flex items-center justify-center transition-all touch-manipulation shadow-2xs shrink-0">-</button>
-                  <input type="number" min="0" placeholder="0" data-cat="${cat.id}" data-field="${f}" class="w-10 sm:w-14 py-1 text-center font-extrabold text-slate-900 text-xs sm:text-base border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:bg-white outline-none transition-all shadow-inner">
-                  <button type="button" onclick="adjustCount('${cat.id}', '${f}', 1)" class="w-7 h-7 sm:w-9 sm:h-9 rounded-lg bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-sm sm:text-base flex items-center justify-center transition-all touch-manipulation shadow-xs shrink-0">+</button>
+              <div class="flex flex-col items-center justify-between gap-2 p-3 bg-slate-50/80 hover:bg-slate-100/80 rounded-2xl border border-slate-200/80 transition-all shadow-2xs text-center min-w-0">
+                <label class="text-xs sm:text-sm font-bold text-slate-800 leading-tight w-full truncate" title="${f}">${f}</label>
+                <div class="flex items-center justify-center gap-2 w-full mt-0.5">
+                  <button type="button" onclick="adjustCount('${cat.id}', '${f}', -1)" class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-slate-200/90 hover:bg-slate-300 active:scale-95 text-slate-700 font-bold text-base sm:text-lg flex items-center justify-center transition-all touch-manipulation shadow-2xs shrink-0">-</button>
+                  <input type="number" min="0" placeholder="0" data-cat="${cat.id}" data-field="${f}" class="w-16 sm:w-20 py-1 sm:py-1.5 text-center font-extrabold text-slate-900 text-base sm:text-lg border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:bg-white outline-none transition-all shadow-inner shrink">
+                  <button type="button" onclick="adjustCount('${cat.id}', '${f}', 1)" class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-base sm:text-lg flex items-center justify-center transition-all touch-manipulation shadow-xs shrink-0">+</button>
                 </div>
               </div>
             `).join('')}
@@ -1200,8 +1200,8 @@ function responseJSON(obj) {
           const rate = ESTIMATED_RATES[field] || 0;
           let val = agg[catKey][field] * rate;
 
-          // Add +61 THB bonus per case for Direct Pay ('direct') on 'นวด+ประคบ' and 'หลังคลอด'
-          if (catKey === 'direct' && (field === 'นวด+ประคบ' || field === 'หลังคลอด')) {
+          // Add +61 THB bonus per case for Direct Pay ('direct') on 'นวด+ประคบ (ไม่รวม IMC)' and 'หลังคลอด'
+          if (catKey === 'direct' && (field === 'นวด+ประคบ (ไม่รวม IMC)' || field === 'หลังคลอด')) {
             val += agg[catKey][field] * 61;
           }
 
