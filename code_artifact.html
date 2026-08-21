@@ -9,7 +9,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
@@ -38,12 +38,19 @@
       from { opacity: 0; transform: translateY(6px); }
       to { opacity: 1; transform: translateY(0); }
     }
+    .touch-btn {
+      touch-action: manipulation;
+    }
+    .glass-card {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
   </style>
 </head>
 <body class="min-h-full flex flex-col text-slate-800 antialiased selection:bg-emerald-500 selection:text-white">
 
-  <!-- Header -->
-  <header class="bg-gradient-to-r from-emerald-800 via-teal-800 to-emerald-900 text-white shadow-lg sticky top-0 z-30">
+  <header class="bg-gradient-to-r from-emerald-900 via-teal-900 to-emerald-950 text-white shadow-xl sticky top-0 z-30 border-b border-emerald-700/40">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex items-center justify-between h-16 sm:h-20">
         <!-- Logo & Title -->
@@ -58,18 +65,22 @@
               แบบบันทึกงานแพทย์แผนไทย
               <span class="text-xs bg-emerald-700/60 text-emerald-200 border border-emerald-500/30 font-normal px-2 py-0.5 rounded-full hidden sm:inline-block">v3.0</span>
             </h1>
-            <p class="text-xs text-emerald-200/80 font-light hidden sm:block">ระบบบันทึกบริการ คำนวณมูลค่าการรักษา และสรุปยอดประจำวัน</p>
+            <p class="text-xs text-emerald-200/80 font-light hidden sm:block">ระบบบันทึกบริการ คำนวณมูลค่าการรักษา และซิงค์ Google Sheets</p>
           </div>
         </div>
 
-        <!-- Google Sheets Status & Quick Stats Pill -->
-        <div class="flex items-center gap-3">
-          <button type="button" onclick="openGoogleSheetsModal()" id="sheets-status-pill" class="flex items-center gap-2 px-3 py-1.5 bg-emerald-950/60 hover:bg-emerald-900 border border-emerald-600/50 rounded-xl text-xs text-emerald-100 transition-all shadow-xs">
-            <span class="relative flex h-2 w-2">
-              <span id="sheets-indicator-ping" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span id="sheets-indicator-dot" class="relative inline-flex rounded-full h-2 w-2 bg-emerald-400"></span>
-            </span>
-            <span id="sheets-status-text" class="font-medium hidden sm:inline">Sheets พร้อมซิงค์</span>
+        <!-- Quick Sync & Header Status Buttons -->
+        <div class="flex items-center gap-2 sm:gap-3">
+          <!-- Direct Fetch Button -->
+          <button type="button" onclick="window.fetchFromGoogleSheets()" title="ดึงข้อมูลล่าสุดจาก Google Sheets" class="px-3 py-1.5 bg-emerald-800/80 hover:bg-emerald-700 text-emerald-100 rounded-xl border border-emerald-500/40 text-xs font-semibold flex items-center gap-1.5 transition-all shadow-sm active:scale-95">
+            <svg class="w-3.5 h-3.5 text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+            <span class="hidden sm:inline">ดึงข้อมูลจาก Sheets</span>
+          </button>
+
+          <!-- Settings & Connection Status Modal Trigger -->
+          <button type="button" onclick="window.openGoogleSheetsModal()" class="px-3 py-1.5 bg-black/25 hover:bg-black/40 text-emerald-100 rounded-xl border border-white/10 text-xs font-semibold flex items-center gap-2 transition-all shadow-sm">
+            <span class="w-2.5 h-2.5 rounded-full bg-slate-400" id="header-sync-dot"></span>
+            <span id="header-sync-status" class="truncate max-w-[120px] sm:max-w-none">ตั้งค่า Google Sheets</span>
           </button>
 
           <div class="hidden md:flex items-center gap-4 text-xs bg-black/20 backdrop-blur-sm px-4 py-2 rounded-xl border border-white/10">
@@ -88,16 +99,16 @@
     </div>
 
     <!-- Navigation Tabs -->
-    <div class="bg-emerald-950/40 border-t border-emerald-700/30 backdrop-blur-md">
+    <div class="bg-emerald-950/50 border-t border-emerald-800/40 backdrop-blur-md">
       <div class="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
         <nav class="flex space-x-2 sm:space-x-4 py-2" aria-label="Tabs">
-          <button id="nav-entry" onclick="switchTab('entry')" class="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 bg-white text-emerald-900 shadow-md">
+          <button id="nav-entry" onclick="window.switchTab('entry')" class="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 bg-white text-emerald-900 shadow-md">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
             <span>บันทึกข้อมูลบริการ</span>
           </button>
           
-          <button id="nav-summary" onclick="switchTab('summary')" class="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 text-emerald-100 hover:bg-emerald-800/50 hover:text-white">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+          <button id="nav-summary" onclick="window.switchTab('summary')" class="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 text-emerald-100 hover:bg-emerald-800/50 hover:text-white">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 012-2h2a2 2 0 012-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
             <span>สรุปยอด & สถิติ</span>
             <span id="tab-count-badge" class="ml-1 px-2 py-0.5 text-xs bg-emerald-700/80 text-emerald-100 rounded-full font-semibold">0</span>
           </button>
@@ -108,9 +119,9 @@
 
   <main class="flex-1 max-w-7xl w-full mx-auto px-3 py-4 sm:px-6 sm:py-6">
 
-    <!-- VIEW 1: ENTRY FORM -->
+    <!-- Entry View Section -->
     <section id="view-entry" class="animate-fade-in space-y-6">
-      <form id="entry-form" onsubmit="handleFormSubmit(event)" class="space-y-6">
+      <form id="entry-form" onsubmit="window.handleFormSubmit(event)" class="space-y-6">
 
         <!-- Edit Mode Alert Banner -->
         <div id="edit-mode-banner" class="hidden bg-amber-50 border border-amber-300/80 rounded-2xl p-4 flex items-center justify-between shadow-xs animate-fade-in">
@@ -123,7 +134,7 @@
               <div class="text-xs text-amber-700" id="edit-mode-text">รายการที่เลือกกำลังเปิดให้ปรับปรุงแก้ไข</div>
             </div>
           </div>
-          <button type="button" onclick="cancelEdit()" class="px-3.5 py-1.5 bg-white border border-amber-300 hover:bg-amber-100 text-amber-800 rounded-xl text-xs font-semibold transition-colors shadow-2xs">
+          <button type="button" onclick="window.cancelEdit()" class="px-3.5 py-1.5 bg-white border border-amber-300 hover:bg-amber-100 text-amber-800 rounded-xl text-xs font-semibold transition-colors shadow-2xs">
             ยกเลิกการแก้ไข
           </button>
         </div>
@@ -131,88 +142,89 @@
         <!-- Date & Service Shift Header Card -->
         <div class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200/80 hover:shadow-md transition-shadow">
           <div class="flex items-center gap-2 mb-4 pb-3 border-b border-slate-100">
-            <div class="w-3.5 h-3.5 rounded-full bg-emerald-500"></div>
-            <h2 class="text-base sm:text-xl font-bold text-slate-800">1. ข้อมูลทั่วไปการให้บริการ</h2>
+            <div class="w-3 h-3 rounded-full bg-emerald-500"></div>
+            <h2 class="text-base sm:text-lg font-bold text-slate-800">1. ข้อมูลทั่วไปการให้บริการ</h2>
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <!-- Date Input -->
             <div>
-              <label for="input-date" class="block text-sm sm:text-base font-semibold text-slate-700 mb-2">วันที่ให้บริการ</label>
+              <label for="input-date" class="block text-sm font-medium text-slate-700 mb-1.5">วันที่ให้บริการ</label>
               <div class="flex gap-2">
-                <input type="date" id="input-date" required class="flex-1 p-3 bg-slate-50 border-2 border-slate-300 rounded-xl text-slate-800 text-base font-medium focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all shadow-2xs">
-                <button type="button" onclick="setQuickDate('today')" class="px-4 py-3 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 rounded-xl text-sm font-bold border border-emerald-200/80 active:scale-95 transition-all shadow-2xs shrink-0">วันนี้</button>
-                <button type="button" onclick="setQuickDate('yesterday')" class="px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-sm font-bold border border-slate-200 active:scale-95 transition-all shadow-2xs shrink-0">เมื่อวาน</button>
+                <input type="date" id="input-date" required class="flex-1 p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 text-base font-medium focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all">
+                <button type="button" onclick="window.setQuickDate('today')" class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition-colors">วันนี้</button>
+                <button type="button" onclick="window.setQuickDate('yesterday')" class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition-colors">เมื่อวาน</button>
               </div>
             </div>
 
             <!-- Service Shift -->
             <div>
-              <label class="block text-sm sm:text-base font-semibold text-slate-700 mb-2">ช่วงเวลาเข้ารับบริการ</label>
-              <div class="grid grid-cols-3 gap-2.5">
-                <label class="cursor-pointer border-2 border-slate-200 rounded-xl p-3 flex items-center justify-center gap-2 hover:bg-slate-50 has-[:checked]:bg-emerald-50 has-[:checked]:border-emerald-600 has-[:checked]:text-emerald-900 transition-all font-medium text-sm sm:text-base shadow-2xs">
+              <label class="block text-sm font-medium text-slate-700 mb-1.5">ช่วงเวลาเข้ารับบริการ</label>
+              <div class="grid grid-cols-3 gap-2">
+                <label class="cursor-pointer border border-slate-200 rounded-xl p-3 flex items-center justify-center gap-2 hover:bg-slate-50 has-[:checked]:bg-emerald-50 has-[:checked]:border-emerald-500 has-[:checked]:text-emerald-800 transition-all">
                   <input type="radio" name="serviceTime" value="ในเวลา" checked class="w-4 h-4 text-emerald-600 focus:ring-emerald-500">
-                  <span>ในเวลา</span>
+                  <span class="text-sm font-medium">ในเวลา</span>
                 </label>
-                <label class="cursor-pointer border-2 border-slate-200 rounded-xl p-3 flex items-center justify-center gap-2 hover:bg-slate-50 has-[:checked]:bg-emerald-50 has-[:checked]:border-emerald-600 has-[:checked]:text-emerald-900 transition-all font-medium text-sm sm:text-base shadow-2xs">
+                <label class="cursor-pointer border border-slate-200 rounded-xl p-3 flex items-center justify-center gap-2 hover:bg-slate-50 has-[:checked]:bg-emerald-50 has-[:checked]:border-emerald-500 has-[:checked]:text-emerald-800 transition-all">
                   <input type="radio" name="serviceTime" value="นอกเวลา" class="w-4 h-4 text-emerald-600 focus:ring-emerald-500">
-                  <span>นอกเวลา</span>
+                  <span class="text-sm font-medium">นอกเวลา</span>
                 </label>
-                <label class="cursor-pointer border-2 border-slate-200 rounded-xl p-3 flex items-center justify-center gap-2 hover:bg-slate-50 has-[:checked]:bg-emerald-50 has-[:checked]:border-emerald-600 has-[:checked]:text-emerald-900 transition-all font-medium text-sm sm:text-base shadow-2xs">
+                <label class="cursor-pointer border border-slate-200 rounded-xl p-3 flex items-center justify-center gap-2 hover:bg-slate-50 has-[:checked]:bg-emerald-50 has-[:checked]:border-emerald-500 has-[:checked]:text-emerald-800 transition-all">
                   <input type="radio" name="serviceTime" value="เชิงรุก" class="w-4 h-4 text-emerald-600 focus:ring-emerald-500">
-                  <span>เชิงรุก</span>
+                  <span class="text-sm font-medium">เชิงรุก</span>
                 </label>
               </div>
             </div>
           </div>
         </div>
 
+        <!-- Rights Categories Section -->
         <div class="space-y-4">
           <div class="flex items-center justify-between">
-            <h2 class="text-base sm:text-xl font-bold text-slate-800 flex items-center gap-2">
-              <div class="w-3.5 h-3.5 rounded-full bg-teal-500"></div>
+            <h2 class="text-base sm:text-lg font-bold text-slate-800 flex items-center gap-2">
+              <div class="w-3 h-3 rounded-full bg-teal-500"></div>
               <span>2. จำนวนผู้รับบริการแบ่งตามสิทธิการรักษา</span>
             </h2>
-            <button type="button" onclick="clearAllInputs()" class="text-xs sm:text-sm font-semibold text-slate-500 hover:text-red-600 flex items-center gap-1.5 px-3 py-1.5 rounded-xl hover:bg-red-50 border border-transparent hover:border-red-200 transition-all">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+            <button type="button" onclick="window.clearAllInputs()" class="text-xs text-slate-500 hover:text-red-600 flex items-center gap-1 transition-colors font-medium">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
               ล้างตัวเลขทั้งหมด
             </button>
           </div>
 
           <!-- Dynamic Rights Categories Container -->
           <div id="categories-container" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <!-- Rendered by JS -->
+            <!-- Rendered dynamically by JS -->
           </div>
         </div>
 
         <!-- Cash Field -->
-        <div class="bg-gradient-to-br from-emerald-900 via-teal-900 to-emerald-950 text-white p-5 sm:p-7 rounded-2xl shadow-lg border border-emerald-700/50 relative overflow-hidden">
+        <div class="bg-gradient-to-br from-emerald-900 via-teal-900 to-emerald-950 text-white p-5 sm:p-6 rounded-2xl shadow-lg border border-emerald-700/50 relative overflow-hidden">
           <div class="absolute -right-8 -bottom-8 w-36 h-36 bg-emerald-500/10 rounded-full blur-2xl"></div>
           
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <label for="input-cash" class="block text-lg sm:text-xl font-bold text-emerald-100 mb-1">
+              <label for="input-cash" class="block text-base sm:text-lg font-bold text-emerald-100 mb-1">
                 3. เงินสดรับจริงรวมทั้งหมด (บาท)
               </label>
-              <p class="text-xs sm:text-sm text-emerald-200/90 font-light">
+              <p class="text-xs text-emerald-300 font-light">
                 รวมเงินสดที่เก็บส่งการเงิน + ค่านอกเวลา + ค่าบริการอื่นๆ
               </p>
             </div>
 
-            <div class="flex items-center gap-3 bg-black/40 p-2.5 sm:p-3 rounded-2xl border border-white/15 w-full sm:w-auto shadow-inner">
-              <span class="text-2xl sm:text-3xl font-bold text-amber-300 pl-3">฿</span>
-              <input type="number" min="0" step="0.01" id="input-cash" placeholder="0.00" class="w-full sm:w-52 bg-transparent text-white text-2xl sm:text-3xl font-extrabold placeholder-emerald-700/80 focus:outline-none text-right pr-2">
+            <div class="flex items-center gap-2 bg-black/30 p-2.5 rounded-2xl border border-white/10 w-full sm:w-auto">
+              <span class="text-2xl font-bold text-amber-300 pl-3">฿</span>
+              <input type="number" min="0" step="0.01" id="input-cash" placeholder="0.00" class="w-full sm:w-48 bg-transparent text-white text-2xl font-bold placeholder-emerald-700/70 focus:outline-none text-right pr-2">
             </div>
           </div>
         </div>
 
         <!-- Form Actions Bar -->
-        <div class="sticky bottom-4 z-20 flex items-center justify-center gap-3 sm:gap-4 bg-white/95 backdrop-blur-md p-3.5 sm:p-5 rounded-2xl shadow-xl border border-slate-200/80">
-          <button type="button" onclick="resetForm()" class="px-6 py-3.5 rounded-xl border-2 border-slate-300 text-slate-700 font-bold hover:bg-slate-100 active:scale-95 transition-all text-sm sm:text-base">
+        <div class="sticky bottom-4 z-20 flex items-center justify-center gap-3 bg-white/95 backdrop-blur-md p-3 sm:p-4 rounded-2xl shadow-xl border border-slate-200">
+          <button type="button" onclick="window.resetForm()" class="px-6 py-3.5 rounded-xl border border-slate-300 text-slate-700 font-medium hover:bg-slate-100 transition-colors text-sm">
             ล้างแบบฟอร์ม
           </button>
-          <button type="submit" id="btn-save-submit" class="px-8 sm:px-10 py-3.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-extrabold rounded-xl shadow-lg shadow-emerald-600/30 hover:shadow-emerald-600/50 active:scale-95 transition-all text-sm sm:text-base flex items-center gap-2.5">
-            <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
+          <button type="submit" id="btn-save-submit" class="px-8 py-3.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold rounded-xl shadow-lg shadow-emerald-600/30 hover:shadow-emerald-600/50 transition-all text-sm flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
             <span>บันทึกข้อมูลบริการ</span>
           </button>
         </div>
@@ -220,69 +232,81 @@
       </form>
     </section>
 
-    <!-- VIEW 2: SUMMARY & STATS -->
+    <!-- Summary View Section -->
     <section id="view-summary" class="hidden animate-fade-in space-y-6">
 
       <!-- Filter Bar -->
       <div class="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-col gap-4">
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-4">
-          <div class="flex items-center gap-3 flex-wrap">
-            <div class="flex items-center gap-2 text-slate-700 font-semibold text-sm">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+          <div class="flex items-center gap-2.5 flex-wrap">
+            <div class="flex items-center gap-1.5 text-slate-700 font-semibold text-xs sm:text-sm">
               <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.447.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z"></path></svg>
-              <span>กรองช่วงเวลา:</span>
+              <span>ตัวกรอง:</span>
             </div>
 
-            <select id="summary-filter-type" onchange="handleFilterTypeChange()" class="p-2 border border-slate-300 rounded-xl text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none">
-              <option value="all">ทั้งหมด</option>
+            <!-- Date Type Filter -->
+            <select id="summary-filter-type" onchange="window.handleFilterTypeChange()" class="p-2 border border-slate-300 rounded-xl text-xs sm:text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none">
+              <option value="all">ทั้งหมด (ทุกวัน)</option>
               <option value="day">รายวัน (ระบุวัน)</option>
               <option value="month">รายเดือน (ระบุเดือน)</option>
             </select>
 
-            <input type="date" id="summary-filter-day" onchange="renderSummary()" class="hidden p-2 border border-slate-300 rounded-xl text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none">
-            <input type="month" id="summary-filter-month" onchange="renderSummary()" class="hidden p-2 border border-slate-300 rounded-xl text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none">
+            <input type="date" id="summary-filter-day" onchange="window.renderSummary()" class="hidden p-2 border border-slate-300 rounded-xl text-xs sm:text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none">
+            <input type="month" id="summary-filter-month" onchange="window.renderSummary()" class="hidden p-2 border border-slate-300 rounded-xl text-xs sm:text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none">
+
+            <!-- Shift Filter -->
+            <div class="flex items-center gap-1.5 border-l pl-2 border-slate-200">
+              <span class="text-xs text-slate-500 font-medium hidden sm:inline">ช่วงเวลา:</span>
+              <select id="summary-filter-shift" onchange="window.renderSummary()" class="p-2 border border-slate-300 rounded-xl text-xs sm:text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none">
+                <option value="all">ทุกช่วงเวลา</option>
+                <option value="ในเวลา">เฉพาะ ในเวลา</option>
+                <option value="นอกเวลา">เฉพาะ นอกเวลา</option>
+                <option value="เชิงรุก">เฉพาะ เชิงรุก</option>
+              </select>
+            </div>
           </div>
 
+          <!-- Quick Action Buttons -->
           <div class="flex items-center gap-2 flex-wrap">
-            <button onclick="fetchFromSheets()" class="px-3 py-2 bg-emerald-700 text-white hover:bg-emerald-800 rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-sm transition-colors">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-              ดึงข้อมูลจาก Sheets
+            <button onclick="window.fetchFromGoogleSheets()" class="px-3 py-2 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-xl text-xs font-semibold flex items-center gap-1.5 border border-indigo-200 transition-colors shadow-2xs">
+              <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+              <span>ดึงข้อมูลจาก Sheets</span>
             </button>
-            <button onclick="exportToCSV()" class="px-3 py-2 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-xl text-xs font-semibold flex items-center gap-1.5 border border-emerald-200 transition-colors">
+            <button onclick="window.exportToCSV()" class="px-3 py-2 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-xl text-xs font-semibold flex items-center gap-1.5 border border-emerald-200 transition-colors">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-              ส่งออก CSV
+              <span>ส่งออก CSV ทั้งหมด</span>
             </button>
-            <button id="btn-clear-all" onclick="showClearConfirmModal()" class="px-3 py-2 bg-red-50 text-red-600 hover:bg-red-100 rounded-xl text-xs font-semibold flex items-center gap-1.5 border border-red-200 transition-colors">
+            <button id="btn-clear-all" onclick="window.showClearConfirmModal()" class="px-3 py-2 bg-red-50 text-red-600 hover:bg-red-100 rounded-xl text-xs font-semibold flex items-center gap-1.5 border border-red-200 transition-colors">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-              ล้างข้อมูลทั้งหมด
+              <span>ล้างข้อมูลทั้งหมด</span>
             </button>
           </div>
         </div>
 
-        <!-- Rights Filter Selection Controls -->
         <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pt-1">
           <div class="flex items-center gap-2 flex-wrap">
             <span class="text-xs font-bold text-slate-700 uppercase tracking-wider">เลือกสิทธิที่ต้องการสรุป:</span>
             <div class="flex items-center gap-2 flex-wrap text-xs">
-              <button type="button" onclick="selectAllRights(true)" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium transition-colors">เลือกทุกสิทธิ</button>
-              <button type="button" onclick="selectAllRights(false)" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium transition-colors">ล้างการเลือก</button>
+              <button type="button" onclick="window.selectAllRights(true)" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium transition-colors">เลือกทุกสิทธิ</button>
+              <button type="button" onclick="window.selectAllRights(false)" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium transition-colors">ล้างการเลือก</button>
             </div>
           </div>
 
           <div class="flex items-center gap-3 flex-wrap text-xs font-medium">
             <label class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border bg-blue-50 border-blue-200 text-blue-900 cursor-pointer">
-              <input type="checkbox" id="filter-right-uc" value="uc" checked onchange="renderSummary()" class="rounded text-blue-600 focus:ring-blue-500">
+              <input type="checkbox" id="filter-right-uc" value="uc" checked onchange="window.renderSummary()" class="rounded text-blue-600 focus:ring-blue-500">
               <span>บัตรทอง (UC)</span>
             </label>
             <label class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border bg-amber-50 border-amber-200 text-amber-900 cursor-pointer">
-              <input type="checkbox" id="filter-right-social" value="social" checked onchange="renderSummary()" class="rounded text-amber-600 focus:ring-amber-500">
+              <input type="checkbox" id="filter-right-social" value="social" checked onchange="window.renderSummary()" class="rounded text-amber-600 focus:ring-amber-500">
               <span>ประกันสังคม</span>
             </label>
             <label class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border bg-emerald-50 border-emerald-200 text-emerald-900 cursor-pointer">
-              <input type="checkbox" id="filter-right-direct" value="direct" checked onchange="renderSummary()" class="rounded text-emerald-600 focus:ring-emerald-500">
+              <input type="checkbox" id="filter-right-direct" value="direct" checked onchange="window.renderSummary()" class="rounded text-emerald-600 focus:ring-emerald-500">
               <span>จ่ายตรง</span>
             </label>
             <label class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border bg-purple-50 border-purple-200 text-purple-900 cursor-pointer">
-              <input type="checkbox" id="filter-right-self" value="self" checked onchange="renderSummary()" class="rounded text-purple-600 focus:ring-purple-500">
+              <input type="checkbox" id="filter-right-self" value="self" checked onchange="window.renderSummary()" class="rounded text-purple-600 focus:ring-purple-500">
               <span>ชำระเงินเอง/อื่นๆ</span>
             </label>
           </div>
@@ -296,25 +320,25 @@
           </div>
           <div class="flex items-center gap-4 flex-wrap">
             <label class="inline-flex items-center gap-1.5 cursor-pointer text-slate-700 font-medium">
-              <input type="radio" name="calcMode" value="specific" checked onchange="renderSummary()" class="text-emerald-600 focus:ring-emerald-500">
-              <span>รวมเฉพาะหัตถการหลัก (นวด, ประคบ, นวด+ประคบ (ไม่รวม IMC), หลังคลอด, อบสมุนไพร, ยอด IMC) + เงินสด</span>
+              <input type="radio" name="calcMode" value="specific" checked onchange="window.renderSummary()" class="text-emerald-600 focus:ring-emerald-500">
+              <span>รวมเฉพาะหัตถการหลัก (นวด+ประคบ (ไม่รวม IMC), นวด, ประคบ, หลังคลอด) + เงินสด</span>
             </label>
             <label class="inline-flex items-center gap-1.5 cursor-pointer text-slate-700 font-medium">
-              <input type="radio" name="calcMode" value="all" onchange="renderSummary()" class="text-emerald-600 focus:ring-emerald-500">
-              <span>รวมทุกประเภทบริการ + เงินสด</span>
+              <input type="radio" name="calcMode" value="all" onchange="window.renderSummary()" class="text-emerald-600 focus:ring-emerald-500">
+              <span>รวมทุกประเภทบริการ (ไม่รวมยอด IMC และจ่ายยา) + เงินสด</span>
             </label>
           </div>
         </div>
       </div>
 
-      <!-- KPI Summary Cards Grid -->
+      <!-- KPI Summary Cards -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <!-- Card 1: Total Records -->
         <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm">
           <div class="flex items-center justify-between text-slate-500 text-xs font-medium mb-1">
             <span>จำนวนรายการบันทึก</span>
             <div class="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 01-2-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
             </div>
           </div>
           <div class="text-2xl font-bold text-slate-800" id="summary-card-count">0</div>
@@ -354,46 +378,47 @@
             </div>
           </div>
           <div class="text-2xl font-bold text-amber-600" id="summary-card-services">0 ครั้ง</div>
-          <div class="text-xs text-amber-600/70 mt-1">รวมทุกประเภทบริการ</div>
+          <div class="text-xs text-amber-600/70 mt-1">ตามโหมดการคำนวณที่เลือก</div>
         </div>
       </div>
 
-      <!-- Rights Financial Breakdown -->
+      <!-- Financial Value per Right Section -->
       <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
-        <h3 class="text-base font-bold text-slate-800 mb-4 flex items-center gap-2">
-          <div class="w-2.5 h-2.5 rounded-full bg-emerald-500"></div>
-          <span>ประมาณการมูลค่าการให้บริการแยกตามสิทธิ (สิทธิจ่ายตรง: นวด+ประคบ (ไม่รวม IMC) และ หลังคลอด บวกเพิ่ม 61 บาท/เคส)</span>
-        </h3>
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+          <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+            <div class="w-2.5 h-2.5 rounded-full bg-emerald-500"></div>
+            <span>ประมาณการมูลค่าการให้บริการแยกตามสิทธิ (สิทธิจ่ายตรง: นวด+ประคบ (ไม่รวม IMC) และ หลังคลอด บวกเพิ่ม 61 บาท/เคส)</span>
+          </h3>
+          <button type="button" onclick="window.downloadRightsFinancialReport()" class="self-start sm:self-auto px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors shrink-0 shadow-2xs">
+            <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+            <span>ดาวน์โหลดสรุปมูลค่า (CSV)</span>
+          </button>
+        </div>
         <div id="summary-rights-money" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <!-- Rendered by JS -->
+          <!-- Rendered dynamically by JS -->
         </div>
       </div>
 
-      <!-- Visual Analytics Chart & Category Matrix -->
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- Chart Canvas Card -->
-        <div class="lg:col-span-1 bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
-          <h3 class="text-base font-bold text-slate-800 mb-4">สัดส่วนการให้บริการสิทธิ</h3>
-          <div class="w-full flex-1 min-h-[240px] flex items-center justify-center">
-            <canvas id="summary-chart"></canvas>
-          </div>
+      <!-- Detailed Breakdown Grid (Full Width 4 Columns) -->
+      <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
+        <div class="flex items-center justify-between gap-3 mb-2">
+          <h3 class="text-base font-bold text-slate-800">จำแนกรายหัตถการและบริการ</h3>
+          <button type="button" onclick="window.downloadProcedureBreakdownReport()" class="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors shadow-2xs">
+            <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+            <span>ดาวน์โหลดจำแนกหัตถการ (CSV)</span>
+          </button>
         </div>
-
-        <!-- Detailed Breakdown Grid -->
-        <div class="lg:col-span-2 bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
-          <h3 class="text-base font-bold text-slate-800 mb-2">จำแนกรายหัตถการและบริการ</h3>
-          <div id="summary-categories" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <!-- Rendered by JS -->
-          </div>
+        <div id="summary-categories" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <!-- Rendered dynamically by JS -->
         </div>
       </div>
 
-      <!-- History Log Table Card -->
+      <!-- History Table Section -->
       <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
         <div class="p-5 border-b border-slate-100 flex items-center justify-between">
           <div>
             <h3 class="text-base font-bold text-slate-800">ประวัติการบันทึกบริการ</h3>
-            <p class="text-xs text-slate-500">แสดงรายการบันทึกทั้งหมดตามตัวกรองปัจจุบัน</p>
+            <p class="text-xs text-slate-500">แสดงรายการบันทึกทั้งหมดตามตัวกรองปัจจุบัน (เคสบริการรวม = นวด+ประคบ (ไม่รวม IMC), นวด, ประคบ, หลังคลอด และรวม พอกเข่า เฉพาะสิทธิบัตรทอง)</p>
           </div>
           <span id="history-badge-count" class="px-3 py-1 bg-slate-100 text-slate-700 rounded-full text-xs font-semibold">0 รายการ</span>
         </div>
@@ -415,62 +440,133 @@
               </tr>
             </thead>
             <tbody id="history-body" class="divide-y divide-slate-100 text-slate-700">
-              <!-- Rendered by JS -->
+              <!-- Rendered dynamically by JS -->
             </tbody>
           </table>
+        </div>
+      </div>
+
+      <!-- Analytics Chart Section -->
+      <div class="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+          <div>
+            <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+              <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path></svg>
+              <span>กราฟสรุปยอดและสถิติวิเคราะห์ ( Line Analytics Chart )</span>
+            </h3>
+            <p class="text-xs text-slate-500 mt-0.5">แสดงกราฟเส้นยืดหยุ่นตาม วัน/เดือน, ช่วงเวลา (ในเวลา/นอกเวลา/เชิงรุก), หัตถการ และสิทธิที่เลือก</p>
+          </div>
+
+          <!-- Chart Metric Selector & Download Chart Button -->
+          <div class="flex items-center gap-2 flex-wrap">
+            <button type="button" onclick="window.downloadAnalyticsChartImage()" class="px-3 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-800 border border-indigo-200 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors shadow-2xs">
+              <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+              <span>ดาวน์โหลดรูปกราฟ (PNG)</span>
+            </button>
+
+            <span class="text-xs font-semibold text-slate-600 shrink-0">มุมมองกราฟ:</span>
+            <select id="analytics-metric-type" onchange="window.renderSummary()" class="p-2 border border-slate-300 rounded-xl text-xs bg-slate-50 font-medium focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none">
+              <option value="cases_over_time" selected>กราฟเส้น: เคสบริการรวมตามวันที่ (ครั้ง)</option>
+              <option value="rights_over_time">กราฟเส้น: เคสบริการแยกตามสิทธิการรักษาตามวันที่ (ครั้ง)</option>
+              <option value="procedures_over_time">กราฟเส้น: จำนวนเคสแยกตามหัตถการตามวันที่ (ครั้ง)</option>
+              <option value="shifts_over_time">กราฟเส้น: เคสบริการแยกตามช่วงเวลา (ในเวลา/นอกเวลา/เชิงรุก) ตามวันที่ (ครั้ง)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Procedure Filter Options for Line Chart -->
+        <div id="procedure-filter-container" class="hidden p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2 text-xs">
+          <div class="flex items-center justify-between flex-wrap gap-2 border-b border-slate-200/60 pb-2">
+            <span class="font-bold text-slate-700 flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+              <span>เลือกหัตถการที่ต้องการแสดงในกราฟเส้น (กรองร่วมกับสิทธิการรักษาที่เลือกด้านบน):</span>
+            </span>
+            <div class="flex items-center gap-2 text-xs">
+              <button type="button" onclick="window.selectAllProcedureFilters(true)" class="px-2.5 py-1 bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 rounded-lg font-medium transition-colors">เลือกทั้งหมด</button>
+              <button type="button" onclick="window.selectAllProcedureFilters(false)" class="px-2.5 py-1 bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 rounded-lg font-medium transition-colors">ล้างการเลือก</button>
+            </div>
+          </div>
+          <div class="flex flex-wrap items-center gap-2 pt-1" id="procedure-filter-options">
+            <!-- Rendered dynamically by JS -->
+          </div>
+        </div>
+
+        <div class="w-full min-h-[300px] sm:min-h-[360px] relative flex items-center justify-center p-2">
+          <canvas id="analytics-chart"></canvas>
         </div>
       </div>
 
     </section>
   </main>
 
-  <!-- MODAL: Google Sheets Configuration -->
+  <!-- MODAL: Google Sheets Connection & Config -->
   <div id="sheets-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 hidden animate-fade-in">
-    <div class="bg-white rounded-2xl p-6 max-w-lg w-full shadow-2xl border border-slate-100 space-y-4 max-h-[90vh] overflow-y-auto custom-scrollbar">
-      <div class="flex items-center justify-between border-b pb-3">
-        <div class="flex items-center gap-2">
-          <div class="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+    <div class="bg-white rounded-3xl p-6 max-w-lg w-full shadow-2xl border border-slate-100 space-y-5 max-h-[90vh] overflow-y-auto custom-scrollbar">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 01-2-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
           </div>
-          <h3 class="text-base font-bold text-slate-800">ตั้งค่าการเชื่อมต่อ Google Sheets</h3>
+          <div>
+            <h3 class="text-base font-bold text-slate-800">ตั้งค่าการเชื่อมต่อ Google Sheets</h3>
+            <p class="text-xs text-slate-500">ซิงค์บันทึกข้อมูลบริการกับตารางออนไลน์</p>
+          </div>
         </div>
-        <button onclick="closeGoogleSheetsModal()" class="text-slate-400 hover:text-slate-600 p-1">
+        <button type="button" onclick="window.closeGoogleSheetsModal()" class="text-slate-400 hover:text-slate-600 p-1">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
         </button>
       </div>
 
-      <div class="space-y-3 text-xs text-slate-600">
-        <p class="leading-relaxed">
-          ระบบเชื่อมต่อสเปรดชีตผ่าน <strong class="text-slate-800">Google Apps Script Web App</strong> เพื่อซิงค์และจัดเก็บข้อมูลออนไลน์
-        </p>
-
+      <div class="space-y-4">
         <!-- Web App URL Input -->
         <div class="space-y-1.5">
           <label for="input-webapp-url" class="block text-xs font-bold text-slate-700 uppercase tracking-wide">Google Apps Script Web App URL</label>
           <div class="flex gap-2">
-            <input type="url" id="input-webapp-url" placeholder="https://script.google.com/macros/s/AKfycb.../exec" class="flex-1 p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-mono text-slate-800 focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none">
-            <button type="button" onclick="saveSheetsConfig()" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-colors shrink-0">บันทึก URL</button>
+            <input type="url" id="input-webapp-url" placeholder="https://script.google.com/macros/s/.../exec" class="flex-1 p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-mono text-slate-800 focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none">
+            <button type="button" onclick="window.saveSheetsConfig()" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-colors shrink-0">บันทึก URL</button>
+          </div>
+          <div class="flex items-center justify-between pt-1">
+            <span id="modal-conn-status" class="text-[11px] text-slate-500 font-medium">สถานะ: รอการทดสอบ</span>
+            <button type="button" onclick="window.testSheetsConnection()" class="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 text-xs font-semibold rounded-xl transition-colors flex items-center gap-1 shadow-2xs">
+              <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+              ทดสอบการเชื่อมต่อ
+            </button>
           </div>
         </div>
 
         <div class="pt-2 border-t space-y-2">
-          <div class="font-bold text-slate-700">คู่มือตั้งค่า Google Apps Script (ทำครั้งแรก):</div>
-          <ol class="list-decimal pl-4 space-y-1 text-[11px] text-slate-600">
-            <li>เปิด <a href="https://docs.google.com/spreadsheets/d/1n6WeO9r2dij2C1LDNRkE6Eyx1QnlFD_MOo6ay0DiNpQ/edit" target="_blank" class="text-emerald-600 underline font-semibold">Google Sheet สเปรดชีต</a></li>
-            <li>ไปที่เมนู <strong class="text-slate-800">Extensions (ส่วนขยาย)</strong> &gt; <strong class="text-slate-800">Apps Script</strong></li>
-            <li>วางโค้ด Apps Script และกด <strong class="text-slate-800">Deploy (ทำให้ใช้งานได้)</strong> &gt; <strong class="text-slate-800">New deployment</strong></li>
-            <li>เลือกประเภทเป็น <strong class="text-slate-800">Web app</strong>, ตั้งค่า <em class="text-slate-800">Execute as: Me</em> และ <em class="text-slate-800">Who has access: Anyone</em></li>
-            <li>คัดลอก Web App URL นำมาวางในช่องด้านบน</li>
-          </ol>
-          <button type="button" onclick="copyGASScript()" class="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors">
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
-            คัดลอกโค้ด Google Apps Script สำเร็จรูป
+          <span class="text-xs font-bold text-slate-700 block">จัดการการซิงค์ข้อมูล</span>
+          <div class="grid grid-cols-2 gap-3">
+            <button type="button" onclick="window.syncWithGoogleSheets()" class="py-2.5 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 text-xs font-bold rounded-xl transition-colors flex items-center justify-center gap-1.5">
+              <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 0115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+              ส่งข้อมูลไป Sheets
+            </button>
+            <button type="button" onclick="window.fetchFromGoogleSheets()" class="py-2.5 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-800 text-xs font-bold rounded-xl transition-colors flex items-center justify-center gap-1.5">
+              <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+              ดึงข้อมูลจาก Sheets
+            </button>
+          </div>
+          <button type="button" onclick="window.disconnectGoogleSheets()" class="w-full py-2 bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 text-xs font-medium rounded-xl border border-slate-200 hover:border-rose-200 transition-colors">
+            ยกเลิกการเชื่อมต่อ (สลับเป็นโหมดออฟไลน์)
           </button>
+        </div>
+
+        <!-- Google Apps Script Code Helper -->
+        <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-slate-700">โค้ด Google Apps Script สำเร็จรูป</span>
+            <button type="button" onclick="window.copyGASScript()" class="text-xs text-emerald-700 font-bold underline hover:text-emerald-800">คัดลอกโค้ด</button>
+          </div>
+          <p class="text-[11px] text-slate-500 leading-relaxed">
+            นำโค้ดนี้ไปวางใน Google Sheets (Extensions &gt; Apps Script) แล้วนำ Web App URL ที่ได้ (Deploy as Web App) มาวางในช่องด้านบน
+          </p>
         </div>
       </div>
 
-      <div class="flex gap-2 pt-2 border-t">
-        <button type="button" onclick="closeGoogleSheetsModal()" class="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-colors">ปิดหน้าต่าง</button>
+      <div class="pt-2">
+        <button type="button" onclick="window.closeGoogleSheetsModal()" class="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-colors">
+          ปิดหน้าต่าง
+        </button>
       </div>
     </div>
   </div>
@@ -486,8 +582,8 @@
         <p class="text-xs text-slate-500 mt-1">การดำเนินการนี้จะลบรายการบันทึกการรักษาทั้งหมดออกจากระบบและไม่สามารถกู้คืนได้</p>
       </div>
       <div class="flex gap-3 pt-2">
-        <button onclick="hideClearConfirmModal()" class="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium rounded-xl transition-colors">ยกเลิก</button>
-        <button onclick="confirmClearAllRecords()" class="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm font-bold rounded-xl shadow-md transition-colors">ยืนยันลบข้อมูล</button>
+        <button type="button" onclick="window.hideClearConfirmModal()" class="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium rounded-xl transition-colors">ยกเลิก</button>
+        <button type="button" onclick="window.confirmClearAllRecords()" class="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm font-bold rounded-xl shadow-md transition-colors">ยืนยันลบข้อมูล</button>
       </div>
     </div>
   </div>
@@ -499,11 +595,304 @@
   </div>
 
   <script>
-    // Constants & Configuration
     const LOCAL_STORAGE_KEY = 'thai_med_records_v3';
-    const GOOGLE_SHEETS_CONFIG_KEY = 'thai_med_sheets_config';
-    const DEFAULT_SPREADSHEET_ID = '1n6WeO9r2dij2C1LDNRkE6Eyx1QnlFD_MOo6ay0DiNpQ';
-    const DEFAULT_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbx6-ahIiKniyvaHCTq9Q3BJ3-DOLb5i2XCFQUHG-CP0qCUxksHetrnRPCKYphedldGRwA/exec';
+    const GOOGLE_SHEETS_CONFIG_KEY = 'thai_med_sheets_config_v3';
+
+    let webAppUrl = '';
+
+    /* Safe JSON Parsing Helper to prevent SyntaxError */
+    function safeJsonParse(str, fallback = {}) {
+      if (!str || typeof str !== 'string' || !str.trim()) {
+        return fallback;
+      }
+      try {
+        return JSON.parse(str);
+      } catch (e) {
+        console.warn('safeJsonParse fallback applied:', e);
+        return fallback;
+      }
+    }
+
+    /* Global Toast Notification Function */
+    window.showToast = function(message, type = 'success') {
+      const toast = document.getElementById('toast');
+      const toastText = document.getElementById('toast-text');
+      const toastIcon = document.getElementById('toast-icon');
+      if (!toast || !toastText) return;
+
+      toastText.textContent = message;
+      if (type === 'success') {
+        toast.className = 'fixed bottom-6 left-1/2 -translate-x-1/2 bg-emerald-900 text-white text-xs sm:text-sm font-medium px-5 py-3 rounded-2xl shadow-2xl z-50 transition-all duration-300 flex items-center gap-2 border border-emerald-700';
+        if (toastIcon) toastIcon.innerHTML = '<svg class="w-4 h-4 text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>';
+      } else if (type === 'error') {
+        toast.className = 'fixed bottom-6 left-1/2 -translate-x-1/2 bg-rose-900 text-white text-xs sm:text-sm font-medium px-5 py-3 rounded-2xl shadow-2xl z-50 transition-all duration-300 flex items-center gap-2 border border-rose-700';
+        if (toastIcon) toastIcon.innerHTML = '<svg class="w-4 h-4 text-rose-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>';
+      } else {
+        toast.className = 'fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-xs sm:text-sm font-medium px-5 py-3 rounded-2xl shadow-2xl z-50 transition-all duration-300 flex items-center gap-2 border border-slate-700';
+        if (toastIcon) toastIcon.innerHTML = '<svg class="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>';
+      }
+
+      toast.classList.remove('hidden');
+      setTimeout(() => {
+        toast.classList.add('hidden');
+      }, 3000);
+    };
+
+    window.updateSheetsStatusUI = function(status = 'unconfigured', msg = '') {
+      const dot = document.getElementById('header-sync-dot');
+      const text = document.getElementById('header-sync-status');
+      const modalMsg = document.getElementById('modal-conn-status');
+
+      if (!dot || !text) return;
+
+      if (status === 'ready' || status === 'success') {
+        dot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse';
+        text.textContent = 'Sheets พร้อมซิงค์';
+        if (modalMsg) {
+          modalMsg.textContent = 'สถานะ: ' + (msg || 'เชื่อมต่อสำเร็จ');
+          modalMsg.className = 'text-[11px] text-emerald-600 font-semibold';
+        }
+      } else if (status === 'syncing' || status === 'testing') {
+        dot.className = 'w-2.5 h-2.5 rounded-full bg-blue-400 animate-ping';
+        text.textContent = status === 'testing' ? 'กำลังทดสอบ...' : 'กำลังซิงค์...';
+        if (modalMsg) {
+          modalMsg.textContent = 'สถานะ: ' + (msg || 'กำลังตรวจสอบการเชื่อมต่อ...');
+          modalMsg.className = 'text-[11px] text-blue-600 font-semibold';
+        }
+      } else if (status === 'error') {
+        dot.className = 'w-2.5 h-2.5 rounded-full bg-rose-500';
+        text.textContent = 'ซิงค์ขัดข้อง';
+        if (modalMsg) {
+          modalMsg.textContent = 'สถานะ: ' + (msg || 'การเชื่อมต่อล้มเหลว');
+          modalMsg.className = 'text-[11px] text-rose-600 font-semibold';
+        }
+      } else {
+        dot.className = 'w-2.5 h-2.5 rounded-full bg-slate-400';
+        text.textContent = 'ตั้งค่า Google Sheets';
+        if (modalMsg) {
+          modalMsg.textContent = 'สถานะ: ยังไม่ได้เชื่อมต่อ (ทำงานแบบออฟไลน์)';
+          modalMsg.className = 'text-[11px] text-slate-500 font-semibold';
+        }
+      }
+    };
+
+    window.openGoogleSheetsModal = function() {
+      const modal = document.getElementById('sheets-modal');
+      const inputUrl = document.getElementById('input-webapp-url');
+      if (inputUrl) inputUrl.value = webAppUrl || '';
+      if (modal) modal.classList.remove('hidden');
+      if (webAppUrl) {
+        window.testSheetsConnection();
+      }
+    };
+
+    window.closeGoogleSheetsModal = function() {
+      const modal = document.getElementById('sheets-modal');
+      if (modal) modal.classList.add('hidden');
+    };
+
+    window.saveSheetsConfig = function() {
+      const urlInput = document.getElementById('input-webapp-url');
+      if (!urlInput) return;
+      const url = urlInput.value.trim();
+      if (!url) {
+        window.showToast('กรุณากรอก Web App URL', 'error');
+        return;
+      }
+      webAppUrl = url;
+      try {
+        localStorage.setItem(GOOGLE_SHEETS_CONFIG_KEY, JSON.stringify({ webAppUrl: url }));
+        window.showToast('บันทึก Web App URL เรียบร้อยแล้ว', 'success');
+        window.testSheetsConnection();
+      } catch (e) {
+        console.error(e);
+      }
+    };
+
+    window.testSheetsConnection = async function() {
+      if (!webAppUrl) {
+        window.updateSheetsStatusUI('unconfigured');
+        return;
+      }
+      window.updateSheetsStatusUI('testing', 'กำลังทดสอบสัญญาณ...');
+      try {
+        const res = await fetch(webAppUrl + '?action=getRecords');
+        if (!res.ok) throw new Error('HTTP status ' + res.status);
+        const textData = await res.text();
+        const data = safeJsonParse(textData, {});
+        if (data && data.status === 'success') {
+          window.updateSheetsStatusUI('success', 'เชื่อมต่อสำเร็จ');
+          window.showToast('การเชื่อมต่อ Google Sheets สมบูรณ์', 'success');
+        } else {
+          window.updateSheetsStatusUI('error', data.message || 'ตอบกลับไม่ถูกต้อง');
+        }
+      } catch (e) {
+        console.warn('Sheets connection test warning:', e);
+        window.updateSheetsStatusUI('error', 'ไม่สามารถเชื่อมต่อได้');
+      }
+    };
+
+    window.disconnectGoogleSheets = function() {
+      webAppUrl = '';
+      try {
+        localStorage.removeItem(GOOGLE_SHEETS_CONFIG_KEY);
+      } catch (e) {
+        console.error(e);
+      }
+      const inputUrl = document.getElementById('input-webapp-url');
+      if (inputUrl) inputUrl.value = '';
+      window.updateSheetsStatusUI('unconfigured');
+      window.showToast('ยกเลิกการเชื่อมต่อ Google Sheets แล้ว (สลับเป็นโหมดออฟไลน์)', 'info');
+    };
+
+    window.syncWithGoogleSheets = async function(silent = false) {
+      if (!webAppUrl) {
+        window.updateSheetsStatusUI('unconfigured');
+        if (!silent) window.openGoogleSheetsModal();
+        return;
+      }
+      window.updateSheetsStatusUI('syncing', 'กำลังส่งข้อมูลไป Sheets...');
+      try {
+        const res = await fetch(webAppUrl, {
+          method: 'POST',
+          mode: 'cors',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ action: 'saveRecords', records: records })
+        });
+        const textData = await res.text();
+        const data = safeJsonParse(textData, {});
+        if (data && data.status === 'success') {
+          window.updateSheetsStatusUI('ready', 'ส่งข้อมูลเรียบร้อยแล้ว');
+          if (!silent) window.showToast('ส่งข้อมูลไป Google Sheets เรียบร้อยแล้ว', 'success');
+        } else {
+          throw new Error(data.message || 'ซิงค์ไม่สำเร็จ');
+        }
+      } catch (e) {
+        console.warn('Sync error:', e);
+        window.updateSheetsStatusUI('error', 'ซิงค์ข้อมูลล้มเหลว');
+        if (!silent) window.showToast('ไม่สามารถซิงค์ไป Google Sheets ได้', 'error');
+      }
+    };
+
+    window.fetchFromGoogleSheets = async function(isInitial = false) {
+      if (!webAppUrl) {
+        window.updateSheetsStatusUI('unconfigured');
+        if (!isInitial) window.openGoogleSheetsModal();
+        return;
+      }
+      window.updateSheetsStatusUI('syncing', 'กำลังดึงข้อมูลจาก Sheets...');
+      try {
+        const res = await fetch(webAppUrl + '?action=getRecords');
+        if (!res.ok) throw new Error('HTTP status ' + res.status);
+        const textData = await res.text();
+        const data = safeJsonParse(textData, {});
+        if (data && data.status === 'success') {
+          if (Array.isArray(data.records) && data.records.length > 0) {
+            // Sanitize records to ensure exact schema
+            records = data.records.map(r => ({
+              id: r.id || ('rec_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5)),
+              date: String(r.date || '').split('T')[0],
+              service_time: r.service_time || 'ในเวลา',
+              total_cash: Number(r.total_cash) || 0,
+              uc_data: typeof r.uc_data === 'object' ? JSON.stringify(r.uc_data) : String(r.uc_data || '{}'),
+              social_data: typeof r.social_data === 'object' ? JSON.stringify(r.social_data) : String(r.social_data || '{}'),
+              direct_data: typeof r.direct_data === 'object' ? JSON.stringify(r.direct_data) : String(r.direct_data || '{}'),
+              self_data: typeof r.self_data === 'object' ? JSON.stringify(r.self_data) : String(r.self_data || '{}'),
+              createdAt: r.createdAt || new Date().toISOString(),
+              updatedAt: r.updatedAt || new Date().toISOString()
+            }));
+            window.saveState();
+            if (currentTab === 'summary') window.renderSummary();
+            if (!isInitial) window.showToast(`ดึงข้อมูลเรียบร้อยแล้ว (${records.length} รายการ)`, 'success');
+          } else {
+            if (!isInitial) window.showToast('ไม่พบข้อมูลบันทึกใน Google Sheets', 'info');
+          }
+          window.updateSheetsStatusUI('ready', 'ดึงข้อมูลสำเร็จ');
+        } else {
+          throw new Error(data.message || 'ดึงข้อมูลไม่สำเร็จ');
+        }
+      } catch (e) {
+        console.warn('Fetch error:', e);
+        window.updateSheetsStatusUI('ready', 'พร้อมใช้งานแบบออฟไลน์');
+        if (!isInitial) window.showToast('ไม่สามารถดึงข้อมูลจาก Google Sheets ได้', 'error');
+      }
+    };
+
+    window.copyGASScript = function() {
+      const scriptCode = `function doGet(e) {
+  var action = e ? e.parameter.action : "";
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  
+  if (action === "getRecords") {
+    var data = sheet.getDataRange().getValues();
+    if (data.length <= 1) {
+      return ContentService.createTextOutput(JSON.stringify({ status: "success", records: [] }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    
+    var headers = data[0];
+    var records = [];
+    for (var i = 1; i < data.length; i++) {
+      var row = data[i];
+      var rec = {};
+      for (var j = 0; j < headers.length; j++) {
+        rec[headers[j]] = row[j];
+      }
+      records.push(rec);
+    }
+    return ContentService.createTextOutput(JSON.stringify({ status: "success", records: records }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+  
+  return ContentService.createTextOutput(JSON.stringify({ status: "success", message: "Google Apps Script is working!" }))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function doPost(e) {
+  try {
+    var contents = JSON.parse(e.postData.contents);
+    if (contents.action === "saveRecords") {
+      var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+      sheet.clearContents();
+      
+      var headers = ["id", "date", "service_time", "total_cash", "uc_data", "social_data", "direct_data", "self_data", "createdAt", "updatedAt"];
+      sheet.appendRow(headers);
+      
+      var records = contents.records || [];
+      for (var i = 0; i < records.length; i++) {
+        var r = records[i];
+        sheet.appendRow([
+          r.id || "",
+          r.date || "",
+          r.service_time || "",
+          r.total_cash || 0,
+          r.uc_data || "",
+          r.social_data || "",
+          r.direct_data || "",
+          r.self_data || "",
+          r.createdAt || "",
+          r.updatedAt || ""
+        ]);
+      }
+      
+      return ContentService.createTextOutput(JSON.stringify({ status: "success" }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+  } catch (err) {
+    return ContentService.createTextOutput(JSON.stringify({ status: "error", message: err.toString() }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}`;
+
+      const tempTextArea = document.createElement('textarea');
+      tempTextArea.value = scriptCode;
+      document.body.appendChild(tempTextArea);
+      tempTextArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(tempTextArea);
+
+      window.showToast('คัดลอกโค้ด Apps Script เรียบร้อยแล้ว', 'success');
+    };
 
     const CATEGORIES = {
       uc: {
@@ -541,341 +930,86 @@
       'นวด+ประคบ (ไม่รวม IMC)': 250,
       'ประคบ': 150,
       'หลังคลอด': 670,
-      'ยอด IMC': 200,
+      'ยอด IMC': 0,
       'นวดเท้า': 200,
       'นวดตัว': 300,
       'นวดท้อง': 100,
-      'อบสมุนไพร': 100,
+      'อบสมุนไพร': 120,
       'พอกเข่า': 100,
-      'จ่ายยา': 50
+      'จ่ายยา': 0
     };
 
     const SPECIFIC_SERVICES = [
       'นวด+ประคบ (ไม่รวม IMC)',
       'นวด',
       'ประคบ',
+      'หลังคลอด'
+    ];
+
+    const ALL_PROCEDURES = [
+      'นวด+ประคบ (ไม่รวม IMC)',
+      'นวด',
+      'ประคบ',
       'หลังคลอด',
       'อบสมุนไพร',
-      'ยอด IMC'
+      'ยอด IMC',
+      'นวดเท้า',
+      'นวดตัว',
+      'นวดท้อง',
+      'พอกเข่า',
+      'จ่ายยา'
     ];
+
+    const PROCEDURE_COLORS = {
+      'นวด+ประคบ (ไม่รวม IMC)': { color: '#10b981', bg: 'rgba(16, 185, 129, 0.08)' },
+      'นวด': { color: '#3b82f6', bg: 'rgba(59, 130, 246, 0.08)' },
+      'ประคบ': { color: '#14b8a6', bg: 'rgba(20, 184, 166, 0.08)' },
+      'หลังคลอด': { color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.08)' },
+      'อบสมุนไพร': { color: '#a855f7', bg: 'rgba(168, 85, 247, 0.08)' },
+      'ยอด IMC': { color: '#6366f1', bg: 'rgba(99, 102, 241, 0.08)' },
+      'นวดเท้า': { color: '#f43f5e', bg: 'rgba(244, 63, 94, 0.08)' },
+      'นวดตัว': { color: '#f97316', bg: 'rgba(249, 115, 22, 0.08)' },
+      'นวดท้อง': { color: '#06b6d4', bg: 'rgba(6, 182, 212, 0.08)' },
+      'พอกเข่า': { color: '#84cc16', bg: 'rgba(132, 204, 22, 0.08)' },
+      'จ่ายยา': { color: '#64748b', bg: 'rgba(100, 116, 139, 0.08)' }
+    };
 
     // Global State
     let records = [];
     let currentTab = 'entry';
-    let summaryChartInstance = null;
+    let analyticsChartInstance = null;
     let editingRecordId = null;
-    let webAppUrl = DEFAULT_WEB_APP_URL;
 
-    function saveState(triggerSync = true) {
-      try {
-        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(records));
-        updateHeaderStats();
-        updateSheetsStatusUI();
-      } catch (e) {
-        console.error('Error saving state:', e);
-      }
-    }
-
-    function loadState() {
+    window.loadState = function() {
       try {
         const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
-        if (raw) {
-          try {
-            records = JSON.parse(raw);
-          } catch(e) {
-            records = [];
-          }
-        } else {
-          records = [];
-        }
+        records = safeJsonParse(raw, []);
 
-        const configRaw = localStorage.getItem(GOOGLE_SHEETS_CONFIG_KEY);
-        if (configRaw) {
-          try {
-            const config = JSON.parse(configRaw);
-            webAppUrl = config.webAppUrl || DEFAULT_WEB_APP_URL;
-          } catch(e) {
-            webAppUrl = DEFAULT_WEB_APP_URL;
+        const sheetsConfig = localStorage.getItem(GOOGLE_SHEETS_CONFIG_KEY);
+        if (sheetsConfig) {
+          const cfg = safeJsonParse(sheetsConfig, {});
+          if (cfg && cfg.webAppUrl) {
+            webAppUrl = cfg.webAppUrl;
           }
-        } else {
-          webAppUrl = DEFAULT_WEB_APP_URL;
         }
       } catch (e) {
         console.error('Error loading state:', e);
         records = [];
-        webAppUrl = DEFAULT_WEB_APP_URL;
       }
-      updateHeaderStats();
-      updateSheetsStatusUI();
-    }
+      window.updateHeaderStats();
+      window.updateSheetsStatusUI(webAppUrl ? 'ready' : 'unconfigured');
+    };
 
-    function updateSheetsStatusUI() {
-      const dot = document.getElementById('sheets-indicator-dot');
-      const ping = document.getElementById('sheets-indicator-ping');
-      const text = document.getElementById('sheets-status-text');
-
-      if (!dot || !text) return;
-
-      if (webAppUrl && webAppUrl.trim() !== '') {
-        dot.className = 'relative inline-flex rounded-full h-2 w-2 bg-emerald-400';
-        if (ping) ping.className = 'animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75';
-        text.textContent = 'Sheets พร้อมซิงค์';
-      } else {
-        dot.className = 'relative inline-flex rounded-full h-2 w-2 bg-amber-400';
-        if (ping) ping.className = 'hidden';
-        text.textContent = 'ตั้งค่า Sheets';
-      }
-    }
-
-    function updateSheetsSyncStatus(status, msg) {
-      const dot = document.getElementById('sheets-indicator-dot');
-      const ping = document.getElementById('sheets-indicator-ping');
-      const text = document.getElementById('sheets-status-text');
-
-      if (!dot || !text) return;
-
-      if (status === 'syncing') {
-        dot.className = 'relative inline-flex rounded-full h-2 w-2 bg-blue-400';
-        if (ping) ping.className = 'animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75';
-        text.textContent = msg || 'กำลังซิงค์...';
-      } else if (status === 'connected') {
-        dot.className = 'relative inline-flex rounded-full h-2 w-2 bg-emerald-400';
-        if (ping) ping.className = 'animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75';
-        text.textContent = msg || 'Sheets พร้อมซิงค์';
-      } else if (status === 'error') {
-        dot.className = 'relative inline-flex rounded-full h-2 w-2 bg-red-400';
-        if (ping) ping.className = 'hidden';
-        text.textContent = msg || 'เกิดข้อผิดพลาด';
-      }
-    }
-
-    async function syncToSheets(record, isDelete = false) {
-      if (!webAppUrl || webAppUrl.trim() === '') return;
-      updateSheetsSyncStatus('syncing', 'กำลังซิงค์กับ Sheets...');
-
+    window.saveState = function() {
       try {
-        const payload = {
-          action: isDelete ? 'deleteRecord' : 'saveRecord',
-          record: record
-        };
-
-        const res = await fetch(webAppUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'text/plain;charset=utf-8'
-          },
-          body: JSON.stringify(payload)
-        });
-
-        const text = await res.text();
-        let result = null;
-        try {
-          result = JSON.parse(text);
-        } catch(e) {
-          if (res.ok) {
-            updateSheetsSyncStatus('connected', 'ซิงค์กับ Sheets เรียบร้อย');
-            return;
-          }
-        }
-
-        if (result && result.status === 'success') {
-          updateSheetsSyncStatus('connected', 'ซิงค์กับ Sheets เรียบร้อย');
-        } else {
-          updateSheetsSyncStatus('connected', 'บันทึกสำเร็จ');
-        }
-      } catch (err) {
-        console.error('Google Sheets Sync Error:', err);
-        updateSheetsSyncStatus('error', 'บันทึกลงแอปแล้ว (Sheets ขัดข้อง)');
-      }
-    }
-
-    async function fetchFromSheets() {
-      if (!webAppUrl || webAppUrl.trim() === '') {
-        showToast('กรุณาระบุ Web App URL ในการตั้งค่าก่อน', 'info');
-        openGoogleSheetsModal();
-        return;
-      }
-
-      updateSheetsSyncStatus('syncing', 'กำลังดึงข้อมูล...');
-      try {
-        const res = await fetch(`${webAppUrl}?action=getRecords`);
-        const text = await res.text();
-
-        if (!text || text.trim() === '') {
-          throw new Error('ไม่พบข้อมูลจาก Google Sheets (คำตอบว่างเปล่า)');
-        }
-
-        let result;
-        try {
-          result = JSON.parse(text);
-        } catch(e) {
-          console.error('Raw text response from GAS:', text);
-          throw new Error('การตอบกลับจาก Google Sheets ไม่ใช่รูปแบบ JSON');
-        }
-
-        let fetchedRecords = [];
-        if (result && Array.isArray(result.records)) {
-          fetchedRecords = result.records;
-        } else if (Array.isArray(result)) {
-          fetchedRecords = result;
-        } else {
-          throw new Error(result?.message || 'ไม่สามารถดึงข้อมูลได้');
-        }
-
-        records = fetchedRecords;
-        saveState(false);
-        updateSheetsSyncStatus('connected', 'ดึงข้อมูลสำเร็จ');
-        showToast(`ดึงข้อมูลเรียบร้อยแล้ว (${records.length} รายการ)`, 'success');
-        if (currentTab === 'summary') renderSummary();
-      } catch (err) {
-        console.error('Fetch error:', err);
-        updateSheetsSyncStatus('error', 'ดึงข้อมูลไม่สำเร็จ');
-        showToast(`เกิดข้อผิดพลาด: ${err.message}`, 'info');
-      }
-    }
-
-    function openGoogleSheetsModal() {
-      const modal = document.getElementById('sheets-modal');
-      const inputUrl = document.getElementById('input-webapp-url');
-      if (inputUrl) inputUrl.value = webAppUrl || DEFAULT_WEB_APP_URL;
-      if (modal) modal.classList.remove('hidden');
-    }
-
-    function closeGoogleSheetsModal() {
-      const modal = document.getElementById('sheets-modal');
-      if (modal) modal.classList.add('hidden');
-    }
-
-    function saveSheetsConfig() {
-      const inputUrl = document.getElementById('input-webapp-url');
-      if (!inputUrl) return;
-
-      webAppUrl = inputUrl.value.trim();
-      localStorage.setItem(GOOGLE_SHEETS_CONFIG_KEY, JSON.stringify({
-        webAppUrl: webAppUrl
-      }));
-
-      updateSheetsStatusUI();
-      closeGoogleSheetsModal();
-      showToast('บันทึกการตั้งค่า Google Sheets เรียบร้อย', 'success');
-    }
-
-    function copyGASScript() {
-      const gasCode = `function doGet(e) {
-  var action = e.parameter.action;
-  if (action === 'getRecords') {
-    return getRecords();
-  }
-  return ContentService.createTextOutput(JSON.stringify({status: 'success', message: 'API Active'}))
-    .setMimeType(ContentService.MimeType.JSON);
-}
-
-function doPost(e) {
-  try {
-    var data = JSON.parse(e.postData.contents);
-    if (data.action === 'saveRecord') {
-      return saveRecord(data.record);
-    } else if (data.action === 'deleteRecord') {
-      return deleteRecord(data.record);
-    }
-    return responseJSON({status: 'error', message: 'Invalid action'});
-  } catch (err) {
-    return responseJSON({status: 'error', message: err.toString()});
-  }
-}
-
-function getSheet() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var sheet = ss.getSheetByName('Data');
-  if (!sheet) {
-    sheet = ss.insertSheet('Data');
-    sheet.appendRow(['id', 'date', 'service_time', 'total_cash', 'uc_data', 'social_data', 'direct_data', 'self_data', 'createdAt', 'updatedAt']);
-  }
-  return sheet;
-}
-
-function getRecords() {
-  var sheet = getSheet();
-  var data = sheet.getDataRange().getValues();
-  if (data.length <= 1) {
-    return responseJSON({status: 'success', records: []});
-  }
-  var headers = data[0];
-  var records = [];
-  for (var i = 1; i < data.length; i++) {
-    var row = data[i];
-    var obj = {};
-    for (var j = 0; j < headers.length; j++) {
-      obj[headers[j]] = row[j];
-    }
-    records.push(obj);
-  }
-  return responseJSON({status: 'success', records: records});
-}
-
-function saveRecord(record) {
-  var sheet = getSheet();
-  var data = sheet.getDataRange().getValues();
-  var foundIndex = -1;
-  for (var i = 1; i < data.length; i++) {
-    if (String(data[i][0]) === String(record.id)) {
-      foundIndex = i + 1;
-      break;
-    }
-  }
-  
-  var rowData = [
-    record.id || '',
-    record.date || '',
-    record.service_time || '',
-    record.total_cash || 0,
-    record.uc_data || '{}',
-    record.social_data || '{}',
-    record.direct_data || '{}',
-    record.self_data || '{}',
-    record.createdAt || new Date().toISOString(),
-    record.updatedAt || new Date().toISOString()
-  ];
-  
-  if (foundIndex > 0) {
-    sheet.getRange(foundIndex, 1, 1, rowData.length).setValues([rowData]);
-  } else {
-    sheet.appendRow(rowData);
-  }
-  return responseJSON({status: 'success', message: 'Saved successfully'});
-}
-
-function deleteRecord(record) {
-  var sheet = getSheet();
-  var data = sheet.getDataRange().getValues();
-  for (var i = 1; i < data.length; i++) {
-    if (String(data[i][0]) === String(record.id)) {
-      sheet.deleteRow(i + 1);
-      return responseJSON({status: 'success', message: 'Deleted successfully'});
-    }
-  }
-  return responseJSON({status: 'success', message: 'Record not found'});
-}
-
-function responseJSON(obj) {
-  return ContentService.createTextOutput(JSON.stringify(obj))
-    .setMimeType(ContentService.MimeType.JSON);
-}`;
-
-      const textarea = document.createElement('textarea');
-      textarea.value = gasCode;
-      document.body.appendChild(textarea);
-      textarea.select();
-      try {
-        document.execCommand('copy');
-        showToast('คัดลอกโค้ด Google Apps Script เรียบร้อยแล้ว', 'success');
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(records));
+        window.updateHeaderStats();
       } catch (e) {
-        showToast('ไม่สามารถคัดลอกได้โดยอัตโนมัติ', 'info');
+        console.error('Error saving state:', e);
       }
-      document.body.removeChild(textarea);
-    }
+    };
 
-    function updateHeaderStats() {
+    window.updateHeaderStats = function() {
       const totalCountEl = document.getElementById('header-total-count');
       const todayCashEl = document.getElementById('header-today-cash');
       const tabBadge = document.getElementById('tab-count-badge');
@@ -889,33 +1023,29 @@ function responseJSON(obj) {
         .reduce((sum, r) => sum + (Number(r.total_cash) || 0), 0);
 
       if (todayCashEl) todayCashEl.textContent = `฿ ${todayCash.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-    }
+    };
 
-    function buildCategoryForms() {
+    window.buildCategoryForms = function() {
       const container = document.getElementById('categories-container');
       if (!container) return;
       container.innerHTML = '';
 
       Object.values(CATEGORIES).forEach(cat => {
         const div = document.createElement('div');
-        div.className = `rounded-2xl border ${cat.borderClass} overflow-hidden bg-white shadow-sm hover:shadow-md transition-shadow`;
+        div.className = `rounded-2xl border ${cat.borderClass} overflow-hidden bg-white shadow-xs`;
         div.innerHTML = `
-          <div class="px-4 py-3 font-bold text-base sm:text-base ${cat.headerClass} border-b border-slate-100 flex justify-between items-center">
-            <span class="flex items-center gap-2">
-              <span class="w-3 h-3 rounded-full bg-current opacity-60"></span>
-              ${cat.title}
-            </span>
-            <button type="button" onclick="clearCategoryInputs('${cat.id}')" class="text-xs font-semibold px-3 py-1.5 rounded-xl bg-white/80 hover:bg-white text-slate-700 transition-colors border border-black/10 shadow-2xs">ล้างหมวดนี้</button>
+          <div class="px-4 py-3 font-bold text-sm ${cat.headerClass} border-b border-slate-100 flex justify-between items-center">
+            <span>${cat.title}</span>
+            <button type="button" onclick="window.clearCategoryInputs('${cat.id}')" class="text-[11px] font-normal underline opacity-80 hover:opacity-100">ล้างหมวดนี้</button>
           </div>
-          <!-- Grid 1 col on mobile, 2 cols on sm/desktop -->
-          <div class="p-3.5 sm:p-4 grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-3">
+          <div class="p-3 sm:p-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
             ${cat.fields.map(f => `
-              <div class="flex flex-col items-center justify-between gap-2.5 p-3.5 sm:p-3 bg-slate-50/90 hover:bg-slate-100/90 rounded-2xl border border-slate-200 transition-all shadow-2xs text-center min-w-0">
-                <label class="text-sm sm:text-xs font-bold text-slate-800 leading-snug w-full text-center px-1 break-words">${f}</label>
-                <div class="flex items-center justify-center gap-3 sm:gap-2 w-full mt-1 sm:mt-0.5">
-                  <button type="button" onclick="adjustCount('${cat.id}', '${f}', -1)" class="w-12 h-12 sm:w-9 sm:h-9 rounded-xl bg-slate-200 hover:bg-slate-300 active:scale-95 text-slate-800 font-extrabold text-2xl sm:text-base flex items-center justify-center transition-all touch-manipulation shadow-2xs shrink-0">-</button>
-                  <input type="number" min="0" placeholder="0" data-cat="${cat.id}" data-field="${f}" class="w-20 sm:w-16 py-2 sm:py-1 text-center font-black text-slate-900 text-2xl sm:text-base border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:bg-white outline-none transition-all shadow-inner shrink">
-                  <button type="button" onclick="adjustCount('${cat.id}', '${f}', 1)" class="w-12 h-12 sm:w-9 sm:h-9 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-extrabold text-2xl sm:text-base flex items-center justify-center transition-all touch-manipulation shadow-md shrink-0">+</button>
+              <div class="flex flex-col items-center justify-between gap-2.5 p-3.5 bg-slate-50/70 rounded-2xl border border-slate-200/80 hover:border-slate-300 transition-all shadow-2xs">
+                <label class="text-sm font-bold text-slate-800 text-center leading-snug w-full">${f}</label>
+                <div class="flex items-center justify-center gap-2.5 w-full pt-1">
+                  <button type="button" onclick="window.adjustCount('${cat.id}', '${f}', -1)" class="w-12 h-12 rounded-xl bg-slate-200 hover:bg-slate-300 active:scale-95 text-slate-700 font-black text-2xl flex items-center justify-center transition-all touch-btn shrink-0 shadow-2xs">-</button>
+                  <input type="number" min="0" placeholder="0" data-cat="${cat.id}" data-field="${f}" class="w-20 p-2 text-center font-black text-slate-900 text-2xl border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white outline-none shrink-0 shadow-inner">
+                  <button type="button" onclick="window.adjustCount('${cat.id}', '${f}', 1)" class="w-12 h-12 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-black text-2xl flex items-center justify-center transition-all touch-btn shrink-0 shadow-sm">+</button>
                 </div>
               </div>
             `).join('')}
@@ -923,28 +1053,26 @@ function responseJSON(obj) {
         `;
         container.appendChild(div);
       });
-    }
+    };
 
-    function adjustCount(catId, field, delta) {
-      const inputs = document.querySelectorAll(`input[data-cat="${catId}"]`);
-      inputs.forEach(input => {
-        if (input.getAttribute('data-field') === field) {
-          let val = parseInt(input.value, 10) || 0;
-          val = Math.max(0, val + delta);
-          input.value = val > 0 ? val : '';
-        }
-      });
-    }
+    window.adjustCount = function(catId, field, delta) {
+      const input = document.querySelector(`input[data-cat="${catId}"][data-field="${field}"]`);
+      if (input) {
+        let val = parseInt(input.value, 10) || 0;
+        val = Math.max(0, val + delta);
+        input.value = val > 0 ? val : '';
+      }
+    };
 
-    function clearCategoryInputs(catId) {
+    window.clearCategoryInputs = function(catId) {
       document.querySelectorAll(`input[data-cat="${catId}"]`).forEach(i => i.value = '');
-    }
+    };
 
-    function clearAllInputs() {
+    window.clearAllInputs = function() {
       document.querySelectorAll('#categories-container input[type="number"]').forEach(i => i.value = '');
-    }
+    };
 
-    function setQuickDate(type) {
+    window.setQuickDate = function(type) {
       const dateInput = document.getElementById('input-date');
       if (!dateInput) return;
       const d = new Date();
@@ -952,9 +1080,9 @@ function responseJSON(obj) {
         d.setDate(d.getDate() - 1);
       }
       dateInput.value = d.toISOString().split('T')[0];
-    }
+    };
 
-    function handleFormSubmit(e) {
+    window.handleFormSubmit = function(e) {
       e.preventDefault();
       const dateVal = document.getElementById('input-date').value;
       const serviceTimeVal = document.querySelector('input[name="serviceTime"]:checked')?.value || 'ในเวลา';
@@ -964,23 +1092,16 @@ function responseJSON(obj) {
       Object.values(CATEGORIES).forEach(cat => {
         const obj = {};
         cat.fields.forEach(f => {
-          const inputs = document.querySelectorAll(`input[data-cat="${cat.id}"]`);
-          let val = 0;
-          inputs.forEach(input => {
-            if (input.getAttribute('data-field') === f) {
-              val = Number(input.value) || 0;
-            }
-          });
-          obj[f] = val;
+          const input = document.querySelector(`input[data-cat="${cat.id}"][data-field="${f}"]`);
+          obj[f] = Number(input?.value) || 0;
         });
         categoryData[cat.id] = obj;
       });
 
-      let targetRecord = null;
       if (editingRecordId) {
         const idx = records.findIndex(r => r.id === editingRecordId);
         if (idx !== -1) {
-          targetRecord = {
+          records[idx] = {
             ...records[idx],
             date: dateVal,
             service_time: serviceTimeVal,
@@ -991,11 +1112,10 @@ function responseJSON(obj) {
             self_data: JSON.stringify(categoryData.self),
             updatedAt: new Date().toISOString()
           };
-          records[idx] = targetRecord;
-          showToast('ปรับปรุงข้อมูลเรียบร้อยแล้ว', 'success');
+          window.showToast('ปรับปรุงข้อมูลเรียบร้อยแล้ว', 'success');
         }
       } else {
-        targetRecord = {
+        const newRecord = {
           id: 'rec_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
           date: dateVal,
           service_time: serviceTimeVal,
@@ -1006,23 +1126,24 @@ function responseJSON(obj) {
           self_data: JSON.stringify(categoryData.self),
           createdAt: new Date().toISOString()
         };
-        records.unshift(targetRecord);
-        showToast('บันทึกข้อมูลบริการเรียบร้อย', 'success');
+        records.unshift(newRecord);
+        window.showToast('บันทึกข้อมูลบริการเรียบร้อย', 'success');
       }
 
-      saveState();
-      if (targetRecord) {
-        syncToSheets(targetRecord, false);
-      }
-      resetForm();
-    }
+      window.saveState();
+      window.resetForm();
 
-    function editRecord(id) {
+      if (webAppUrl) {
+        window.syncWithGoogleSheets(true);
+      }
+    };
+
+    window.editRecord = function(id) {
       const rec = records.find(r => r.id === id);
       if (!rec) return;
 
       editingRecordId = id;
-      switchTab('entry');
+      window.switchTab('entry');
 
       document.getElementById('input-date').value = rec.date;
       const radio = document.querySelector(`input[name="serviceTime"][value="${rec.service_time}"]`);
@@ -1031,17 +1152,13 @@ function responseJSON(obj) {
       document.getElementById('input-cash').value = rec.total_cash || '';
 
       ['uc', 'social', 'direct', 'self'].forEach(key => {
-        try {
-          const d = JSON.parse(rec[key + '_data'] || '{}');
-          Object.keys(d).forEach(field => {
-            const inputs = document.querySelectorAll(`input[data-cat="${key}"]`);
-            inputs.forEach(input => {
-              if (input.getAttribute('data-field') === field) {
-                input.value = d[field] > 0 ? d[field] : '';
-              }
-            });
-          });
-        } catch (e) {}
+        const d = safeJsonParse(rec[key + '_data'], {});
+        Object.keys(d).forEach(field => {
+          const input = document.querySelector(`input[data-cat="${key}"][data-field="${field}"]`);
+          if (input) {
+            input.value = d[field] > 0 ? d[field] : '';
+          }
+        });
       });
 
       const banner = document.getElementById('edit-mode-banner');
@@ -1058,14 +1175,14 @@ function responseJSON(obj) {
       }
 
       window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
+    };
 
-    function cancelEdit() {
-      resetForm();
-      showToast('ยกเลิกการแก้ไขแล้ว', 'info');
-    }
+    window.cancelEdit = function() {
+      window.resetForm();
+      window.showToast('ยกเลิกการแก้ไขแล้ว', 'info');
+    };
 
-    function resetForm() {
+    window.resetForm = function() {
       editingRecordId = null;
       const banner = document.getElementById('edit-mode-banner');
       if (banner) banner.classList.add('hidden');
@@ -1078,14 +1195,14 @@ function responseJSON(obj) {
         `;
       }
 
-      setQuickDate('today');
+      window.setQuickDate('today');
       const radioInTime = document.querySelector('input[name="serviceTime"][value="ในเวลา"]');
       if (radioInTime) radioInTime.checked = true;
       document.getElementById('input-cash').value = '';
-      clearAllInputs();
-    }
+      window.clearAllInputs();
+    };
 
-    function switchTab(tab) {
+    window.switchTab = function(tab) {
       currentTab = tab;
       const viewEntry = document.getElementById('view-entry');
       const viewSummary = document.getElementById('view-summary');
@@ -1102,11 +1219,11 @@ function responseJSON(obj) {
         viewSummary.classList.remove('hidden');
         navEntry.className = 'flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 text-emerald-100 hover:bg-emerald-800/50 hover:text-white';
         navSummary.className = 'flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 bg-white text-emerald-900 shadow-md';
-        renderSummary();
+        window.renderSummary();
       }
-    }
+    };
 
-    function handleFilterTypeChange() {
+    window.handleFilterTypeChange = function() {
       const type = document.getElementById('summary-filter-type').value;
       const filterDay = document.getElementById('summary-filter-day');
       const filterMonth = document.getElementById('summary-filter-month');
@@ -1121,40 +1238,88 @@ function responseJSON(obj) {
         filterMonth.value = new Date().toISOString().slice(0, 7);
       }
 
-      renderSummary();
-    }
+      window.renderSummary();
+    };
 
-    function getFilteredRecords() {
+    window.getFilteredRecords = function() {
       const type = document.getElementById('summary-filter-type')?.value || 'all';
       const day = document.getElementById('summary-filter-day')?.value || '';
       const month = document.getElementById('summary-filter-month')?.value || '';
+      const shift = document.getElementById('summary-filter-shift')?.value || 'all';
 
-      if (type === 'day' && day) return records.filter(r => r.date === day);
-      if (type === 'month' && month) return records.filter(r => (r.date || '').startsWith(month));
-      return records;
-    }
+      let res = records;
+      if (type === 'day' && day) {
+        res = res.filter(r => r.date === day);
+      } else if (type === 'month' && month) {
+        res = res.filter(r => (r.date || '').startsWith(month));
+      }
 
-    function getSelectedRights() {
+      if (shift && shift !== 'all') {
+        res = res.filter(r => r.service_time === shift);
+      }
+
+      return res;
+    };
+
+    window.getSelectedRights = function() {
       const rights = [];
       if (document.getElementById('filter-right-uc')?.checked) rights.push('uc');
       if (document.getElementById('filter-right-social')?.checked) rights.push('social');
       if (document.getElementById('filter-right-direct')?.checked) rights.push('direct');
       if (document.getElementById('filter-right-self')?.checked) rights.push('self');
       return rights;
-    }
+    };
 
-    function selectAllRights(enable) {
+    window.selectAllRights = function(enable) {
       ['uc', 'social', 'direct', 'self'].forEach(key => {
         const el = document.getElementById(`filter-right-${key}`);
         if (el) el.checked = enable;
       });
-      renderSummary();
-    }
+      window.renderSummary();
+    };
 
-    function renderSummary() {
-      const filtered = getFilteredRecords();
-      const selectedRights = getSelectedRights();
+    window.initProcedureFilterOptions = function() {
+      const container = document.getElementById('procedure-filter-options');
+      if (!container || container.children.length > 0) return;
+
+      const defaultActive = ['นวด+ประคบ (ไม่รวม IMC)', 'นวด', 'ประคบ', 'หลังคลอด'];
+
+      container.innerHTML = ALL_PROCEDURES.map(proc => {
+        const isChecked = defaultActive.includes(proc) ? 'checked' : '';
+        const color = PROCEDURE_COLORS[proc]?.color || '#059669';
+        return `
+          <label class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 cursor-pointer text-xs font-medium text-slate-700">
+            <input type="checkbox" value="${proc}" ${isChecked} onchange="window.renderSummary()" class="filter-proc-checkbox rounded text-emerald-600 focus:ring-emerald-500">
+            <span class="w-2 h-2 rounded-full" style="background-color: ${color}"></span>
+            <span>${proc}</span>
+          </label>
+        `;
+      }).join('');
+    };
+
+    window.selectAllProcedureFilters = function(enable) {
+      document.querySelectorAll('.filter-proc-checkbox').forEach(cb => {
+        cb.checked = enable;
+      });
+      window.renderSummary();
+    };
+
+    window.renderSummary = function() {
+      const filtered = window.getFilteredRecords();
+      const selectedRights = window.getSelectedRights();
       const calcMode = document.querySelector('input[name="calcMode"]:checked')?.value || 'specific';
+      const metricType = document.getElementById('analytics-metric-type')?.value || 'cases_over_time';
+      
+      const procFilterContainer = document.getElementById('procedure-filter-container');
+      if (procFilterContainer) {
+        if (metricType === 'procedures_over_time') {
+          procFilterContainer.classList.remove('hidden');
+          window.initProcedureFilterOptions();
+        } else {
+          procFilterContainer.classList.add('hidden');
+        }
+      }
+
       const count = filtered.length;
 
       document.getElementById('summary-card-count').textContent = count;
@@ -1173,21 +1338,21 @@ function responseJSON(obj) {
       filtered.forEach(r => {
         totalCash += Number(r.total_cash) || 0;
         ['uc', 'social', 'direct', 'self'].forEach(key => {
-          try {
-            const d = JSON.parse(r[key + '_data'] || '{}');
-            Object.keys(d).forEach(f => {
-              const val = Number(d[f]) || 0;
-              if (agg[key][f] !== undefined) {
-                agg[key][f] += val;
-                if (selectedRights.includes(key)) {
+          const d = safeJsonParse(r[key + '_data'], {});
+          Object.keys(d).forEach(f => {
+            const val = Number(d[f]) || 0;
+            if (agg[key][f] !== undefined) {
+              agg[key][f] += val;
+              if (selectedRights.includes(key)) {
+                if (f !== 'ยอด IMC' && f !== 'จ่ายยา') {
                   totalServicesCount += val;
-                  if (SPECIFIC_SERVICES.includes(f)) {
-                    specificServicesCount += val;
-                  }
+                }
+                if (SPECIFIC_SERVICES.includes(f)) {
+                  specificServicesCount += val;
                 }
               }
-            });
-          } catch (e) {}
+            }
+          });
         });
       });
 
@@ -1197,10 +1362,10 @@ function responseJSON(obj) {
 
       Object.keys(agg).forEach(catKey => {
         Object.keys(agg[catKey]).forEach(field => {
+          if (field === 'ยอด IMC' || field === 'จ่ายยา') return;
           const rate = ESTIMATED_RATES[field] || 0;
           let val = agg[catKey][field] * rate;
 
-          // Add +61 THB bonus per case for Direct Pay ('direct') on 'นวด+ประคบ (ไม่รวม IMC)' and 'หลังคลอด'
           if (catKey === 'direct' && (field === 'นวด+ประคบ (ไม่รวม IMC)' || field === 'หลังคลอด')) {
             val += agg[catKey][field] * 61;
           }
@@ -1296,67 +1461,245 @@ function responseJSON(obj) {
           sc.appendChild(div);
         });
 
-      renderChart(rightsMoney, selectedRights);
-      renderHistoryTable(filtered);
-    }
+      window.renderHistoryTable(filtered);
+      window.renderAnalyticsChart(filtered, selectedRights, agg);
+    };
 
-    function renderChart(rightsMoney, selectedRights = ['uc', 'social', 'direct', 'self']) {
-      const ctx = document.getElementById('summary-chart');
+    window.renderAnalyticsChart = function(filteredRecords, selectedRights, aggData) {
+      const ctx = document.getElementById('analytics-chart');
       if (!ctx) return;
 
-      if (summaryChartInstance) {
-        summaryChartInstance.destroy();
+      if (analyticsChartInstance) {
+        analyticsChartInstance.destroy();
       }
 
-      const labels = [];
-      const data = [];
-      const bgColors = [];
+      const metricType = document.getElementById('analytics-metric-type')?.value || 'cases_over_time';
+      let labels = [];
+      let datasets = [];
 
-      const map = {
-        uc: { label: 'บัตรทอง (UC)', color: '#3b82f6' },
-        social: { label: 'ประกันสังคม', color: '#f59e0b' },
-        direct: { label: 'จ่ายตรง', color: '#10b981' },
-        self: { label: 'ชำระเงินเอง/อื่นๆ', color: '#a855f7' }
-      };
+      if (metricType === 'cases_over_time') {
+        const dateCasesMap = {};
+        
+        filteredRecords.forEach(r => {
+          const date = r.date || 'ไม่ระบุวันที่';
+          if (!dateCasesMap[date]) {
+            dateCasesMap[date] = 0;
+          }
+          
+          let recordCases = 0;
+          selectedRights.forEach(key => {
+            const d = safeJsonParse(r[key + '_data'], {});
+            const targetFields = key === 'uc' 
+              ? ['นวด+ประคบ (ไม่รวม IMC)', 'นวด', 'ประคบ', 'หลังคลอด', 'พอกเข่า']
+              : ['นวด+ประคบ (ไม่รวม IMC)', 'นวด', 'ประคบ', 'หลังคลอด'];
 
-      selectedRights.forEach(key => {
-        if (map[key]) {
-          labels.push(map[key].label);
-          data.push(rightsMoney[key] || 0);
-          bgColors.push(map[key].color);
-        }
-      });
+            targetFields.forEach(field => {
+              recordCases += Number(d[field]) || 0;
+            });
+          });
+          
+          dateCasesMap[date] += recordCases;
+        });
 
-      summaryChartInstance = new Chart(ctx, {
-        type: 'doughnut',
+        const sortedDates = Object.keys(dateCasesMap).sort();
+        labels = sortedDates;
+
+        datasets = [{
+          label: 'จำนวนเคสบริการรวม (ครั้ง)',
+          data: sortedDates.map(d => dateCasesMap[d]),
+          borderColor: '#059669',
+          backgroundColor: 'rgba(5, 150, 105, 0.12)',
+          fill: true,
+          tension: 0.35,
+          pointBackgroundColor: '#047857',
+          pointBorderColor: '#ffffff',
+          pointBorderWidth: 2,
+          pointRadius: 5,
+          pointHoverRadius: 7,
+          borderWidth: 3
+        }];
+
+      } else if (metricType === 'rights_over_time') {
+        const dateSet = new Set();
+        filteredRecords.forEach(r => dateSet.add(r.date || 'ไม่ระบุวันที่'));
+        const sortedDates = Array.from(dateSet).sort();
+        labels = sortedDates;
+
+        const rightsConfigMap = {
+          uc: { label: 'บัตรทอง (UC)', color: '#3b82f6', bg: 'rgba(59, 130, 246, 0.08)' },
+          social: { label: 'ประกันสังคม', color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.08)' },
+          direct: { label: 'จ่ายตรง', color: '#10b981', bg: 'rgba(16, 185, 129, 0.08)' },
+          self: { label: 'ชำระเงินเอง/อื่นๆ', color: '#a855f7', bg: 'rgba(168, 85, 247, 0.08)' }
+        };
+
+        datasets = selectedRights.filter(key => rightsConfigMap[key]).map(key => {
+          const cfg = rightsConfigMap[key];
+          const dataPoints = sortedDates.map(date => {
+            let dayCount = 0;
+            const recsOnDate = filteredRecords.filter(r => (r.date || 'ไม่ระบุวันที่') === date);
+            recsOnDate.forEach(r => {
+              const d = safeJsonParse(r[key + '_data'], {});
+              const targetFields = key === 'uc' 
+                ? ['นวด+ประคบ (ไม่รวม IMC)', 'นวด', 'ประคบ', 'หลังคลอด', 'พอกเข่า']
+                : ['นวด+ประคบ (ไม่รวม IMC)', 'นวด', 'ประคบ', 'หลังคลอด'];
+
+              targetFields.forEach(field => {
+                dayCount += Number(d[field]) || 0;
+              });
+            });
+            return dayCount;
+          });
+
+          return {
+            label: cfg.label,
+            data: dataPoints,
+            borderColor: cfg.color,
+            backgroundColor: cfg.bg,
+            fill: false,
+            tension: 0.35,
+            pointBackgroundColor: cfg.color,
+            pointBorderColor: '#ffffff',
+            pointBorderWidth: 2,
+            pointRadius: 4,
+            pointHoverRadius: 6,
+            borderWidth: 2.5
+          };
+        });
+
+      } else if (metricType === 'procedures_over_time') {
+        const dateSet = new Set();
+        filteredRecords.forEach(r => dateSet.add(r.date || 'ไม่ระบุวันที่'));
+        const sortedDates = Array.from(dateSet).sort();
+        labels = sortedDates;
+
+        const selectedProcedures = [];
+        document.querySelectorAll('.filter-proc-checkbox:checked').forEach(cb => {
+          selectedProcedures.push(cb.value);
+        });
+
+        datasets = selectedProcedures.map(proc => {
+          const cfg = PROCEDURE_COLORS[proc] || { color: '#059669', bg: 'rgba(5, 150, 105, 0.08)' };
+          const dataPoints = sortedDates.map(date => {
+            let procCount = 0;
+            const recsOnDate = filteredRecords.filter(r => (r.date || 'ไม่ระบุวันที่') === date);
+            recsOnDate.forEach(r => {
+              selectedRights.forEach(key => {
+                const d = safeJsonParse(r[key + '_data'], {});
+                procCount += Number(d[proc]) || 0;
+              });
+            });
+            return procCount;
+          });
+
+          return {
+            label: proc,
+            data: dataPoints,
+            borderColor: cfg.color,
+            backgroundColor: cfg.bg,
+            fill: false,
+            tension: 0.35,
+            pointBackgroundColor: cfg.color,
+            pointBorderColor: '#ffffff',
+            pointBorderWidth: 2,
+            pointRadius: 4,
+            pointHoverRadius: 6,
+            borderWidth: 2.5
+          };
+        });
+
+      } else if (metricType === 'shifts_over_time') {
+        const dateSet = new Set();
+        filteredRecords.forEach(r => dateSet.add(r.date || 'ไม่ระบุวันที่'));
+        const sortedDates = Array.from(dateSet).sort();
+        labels = sortedDates;
+
+        const shiftConfigMap = {
+          'ในเวลา': { label: 'ในเวลา', color: '#10b981', bg: 'rgba(16, 185, 129, 0.08)' },
+          'นอกเวลา': { label: 'นอกเวลา', color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.08)' },
+          'เชิงรุก': { label: 'เชิงรุก', color: '#6366f1', bg: 'rgba(99, 102, 241, 0.08)' }
+        };
+
+        const shiftKeys = ['ในเวลา', 'นอกเวลา', 'เชิงรุก'];
+
+        datasets = shiftKeys.map(shift => {
+          const cfg = shiftConfigMap[shift];
+          const dataPoints = sortedDates.map(date => {
+            let shiftCount = 0;
+            const recsOnDateAndShift = filteredRecords.filter(r => (r.date || 'ไม่ระบุวันที่') === date && r.service_time === shift);
+            recsOnDateAndShift.forEach(r => {
+              selectedRights.forEach(key => {
+                const d = safeJsonParse(r[key + '_data'], {});
+                const targetFields = key === 'uc' 
+                  ? ['นวด+ประคบ (ไม่รวม IMC)', 'นวด', 'ประคบ', 'หลังคลอด', 'พอกเข่า']
+                  : ['นวด+ประคบ (ไม่รวม IMC)', 'นวด', 'ประคบ', 'หลังคลอด'];
+
+                targetFields.forEach(field => {
+                  shiftCount += Number(d[field]) || 0;
+                });
+              });
+            });
+            return shiftCount;
+          });
+
+          return {
+            label: cfg.label,
+            data: dataPoints,
+            borderColor: cfg.color,
+            backgroundColor: cfg.bg,
+            fill: false,
+            tension: 0.35,
+            pointBackgroundColor: cfg.color,
+            pointBorderColor: '#ffffff',
+            pointBorderWidth: 2,
+            pointRadius: 4,
+            pointHoverRadius: 6,
+            borderWidth: 2.5
+          };
+        });
+      }
+
+      analyticsChartInstance = new Chart(ctx, {
+        type: 'line',
         data: {
           labels: labels,
-          datasets: [{
-            data: data,
-            backgroundColor: bgColors,
-            borderWidth: 2,
-            borderColor: '#ffffff'
-          }]
+          datasets: datasets
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
           plugins: {
             legend: {
-              position: 'bottom',
-              labels: {
-                font: { family: 'Prompt', size: 11 },
-                usePointStyle: true,
-                padding: 15
+              display: true,
+              position: 'top',
+              labels: { font: { family: 'Prompt', size: 12 }, usePointStyle: true, padding: 12 }
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  let label = context.dataset.label || '';
+                  if (label) label += ': ';
+                  label += context.parsed.y.toLocaleString() + ' ครั้ง';
+                  return label;
+                }
               }
             }
           },
-          cutout: '65%'
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: { font: { family: 'Prompt', size: 11 } },
+              grid: { color: '#f1f5f9' }
+            },
+            x: {
+              ticks: { font: { family: 'Prompt', size: 11 } },
+              grid: { display: false }
+            }
+          }
         }
       });
-    }
+    };
 
-    function renderHistoryTable(filtered) {
+    window.renderHistoryTable = function(filtered) {
       const empty = document.getElementById('history-empty');
       const tableWrap = document.getElementById('history-table-wrap');
       const tbody = document.getElementById('history-body');
@@ -1374,14 +1717,20 @@ function responseJSON(obj) {
       filtered.forEach(r => {
         let recordCaseCount = 0;
         ['uc', 'social', 'direct', 'self'].forEach(key => {
-          try {
-            const d = JSON.parse(r[key + '_data'] || '{}');
-            Object.values(d).forEach(v => recordCaseCount += Number(v) || 0);
-          } catch (e) {}
+          const d = safeJsonParse(r[key + '_data'], {});
+          const targetFields = key === 'uc' 
+            ? ['นวด+ประคบ (ไม่รวม IMC)', 'นวด', 'ประคบ', 'หลังคลอด', 'พอกเข่า']
+            : ['นวด+ประคบ (ไม่รวม IMC)', 'นวด', 'ประคบ', 'หลังคลอด'];
+
+          targetFields.forEach(field => {
+            recordCaseCount += Number(d[field]) || 0;
+          });
         });
 
+        const detailDrawerId = `drawer_${r.id}`;
+
         const tr = document.createElement('tr');
-        tr.className = 'hover:bg-slate-50 transition-colors text-xs sm:text-sm';
+        tr.className = 'hover:bg-slate-50 transition-colors text-xs sm:text-sm border-b border-slate-100';
         tr.innerHTML = `
           <td class="p-3.5 pl-5 font-semibold text-slate-800 whitespace-nowrap">${r.date}</td>
           <td class="p-3.5 whitespace-nowrap">
@@ -1393,11 +1742,15 @@ function responseJSON(obj) {
           <td class="p-3.5 text-right font-bold text-emerald-600 whitespace-nowrap">฿ ${(Number(r.total_cash) || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
           <td class="p-3.5 text-center pr-5 whitespace-nowrap">
             <div class="flex items-center justify-center gap-1.5">
-              <button onclick="editRecord('${r.id}')" class="px-2.5 py-1 text-amber-600 hover:bg-amber-50 rounded-lg border border-amber-200 transition-colors text-xs font-medium flex items-center gap-1">
+              <button onclick="window.toggleRecordDetail('${detailDrawerId}')" class="px-2.5 py-1 text-blue-600 hover:bg-blue-50 rounded-lg border border-blue-200 transition-colors text-xs font-medium flex items-center gap-1">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                รายละเอียด
+              </button>
+              <button onclick="window.editRecord('${r.id}')" class="px-2.5 py-1 text-amber-600 hover:bg-amber-50 rounded-lg border border-amber-200 transition-colors text-xs font-medium flex items-center gap-1">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                 แก้ไข
               </button>
-              <button onclick="deleteSingleRecord('${r.id}')" class="px-2.5 py-1 text-red-600 hover:bg-red-50 rounded-lg border border-red-200 transition-colors text-xs font-medium flex items-center gap-1">
+              <button onclick="window.deleteSingleRecord('${r.id}')" class="px-2.5 py-1 text-red-600 hover:bg-red-50 rounded-lg border border-red-200 transition-colors text-xs font-medium flex items-center gap-1">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                 ลบ
               </button>
@@ -1405,47 +1758,237 @@ function responseJSON(obj) {
           </td>
         `;
         tbody.appendChild(tr);
-      });
-    }
 
-    function deleteSingleRecord(id) {
-      const rec = records.find(r => r.id === id);
+        // Expandable Detail Drawer Row
+        const detailTr = document.createElement('tr');
+        detailTr.id = detailDrawerId;
+        detailTr.className = 'hidden bg-slate-50/80 border-b border-slate-200';
+        
+        let detailContentHtml = '<div class="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">';
+        const rightsBadgeColors = {
+          uc: 'bg-blue-100 text-blue-900 border-blue-200',
+          social: 'bg-amber-100 text-amber-900 border-amber-200',
+          direct: 'bg-emerald-100 text-emerald-900 border-emerald-200',
+          self: 'bg-purple-100 text-purple-900 border-purple-200'
+        };
+
+        ['uc', 'social', 'direct', 'self'].forEach(key => {
+          const d = safeJsonParse(r[key + '_data'], {});
+          const activeEntries = Object.entries(d).filter(([_, v]) => Number(v) > 0);
+          
+          detailContentHtml += `
+            <div class="bg-white rounded-xl p-3 border border-slate-200 shadow-2xs">
+              <div class="font-bold border-b pb-1.5 mb-2 flex justify-between items-center">
+                <span>${CATEGORIES[key]?.title}</span>
+                <span class="text-[10px] px-2 py-0.5 rounded-full border ${rightsBadgeColors[key]}">${activeEntries.reduce((sum, [_, v]) => sum + Number(v), 0)} ครั้ง</span>
+              </div>
+              ${activeEntries.length > 0 ? `
+                <div class="space-y-1">
+                  ${activeEntries.map(([field, val]) => `
+                    <div class="flex justify-between items-center text-[11px] text-slate-600">
+                      <span>• ${field}</span>
+                      <span class="font-bold text-slate-800">${val}</span>
+                    </div>
+                  `).join('')}
+                </div>
+              ` : '<div class="text-[11px] text-slate-400 italic">ไม่มีข้อมูลบริการ</div>'}
+            </div>
+          `;
+        });
+
+        detailContentHtml += '</div>';
+        detailTr.innerHTML = `<td colspan="5" class="p-0">${detailContentHtml}</td>`;
+        tbody.appendChild(detailTr);
+      });
+    };
+
+    window.toggleRecordDetail = function(drawerId) {
+      const el = document.getElementById(drawerId);
+      if (el) {
+        el.classList.toggle('hidden');
+      }
+    };
+
+    window.deleteSingleRecord = function(id) {
       if (editingRecordId === id) {
-        cancelEdit();
+        window.cancelEdit();
       }
       records = records.filter(r => r.id !== id);
-      saveState();
-      if (rec) {
-        syncToSheets(rec, true);
-      }
-      showToast('ลบรายการบันทึกเรียบร้อย', 'info');
-      if (currentTab === 'summary') renderSummary();
-    }
+      window.saveState();
+      window.showToast('ลบรายการบันทึกเรียบร้อย', 'info');
+      if (currentTab === 'summary') window.renderSummary();
+      if (webAppUrl) window.syncWithGoogleSheets(true);
+    };
 
-    function showClearConfirmModal() {
+    window.showClearConfirmModal = function() {
       document.getElementById('clear-modal').classList.remove('hidden');
-    }
+    };
 
-    function hideClearConfirmModal() {
+    window.hideClearConfirmModal = function() {
       document.getElementById('clear-modal').classList.add('hidden');
-    }
+    };
 
-    function confirmClearAllRecords() {
+    window.confirmClearAllRecords = function() {
       records = [];
-      saveState();
-      hideClearConfirmModal();
-      showToast('ล้างข้อมูลทั้งหมดเรียบร้อยแล้ว', 'info');
-      if (currentTab === 'summary') renderSummary();
-    }
+      window.saveState();
+      window.hideClearConfirmModal();
+      window.showToast('ล้างข้อมูลทั้งหมดเรียบร้อยแล้ว', 'info');
+      if (currentTab === 'summary') window.renderSummary();
+      if (webAppUrl) window.syncWithGoogleSheets(true);
+    };
 
-    function exportToCSV() {
-      const filtered = getFilteredRecords();
-      if (filtered.length === 0) {
-        showToast('ไม่มีข้อมูลสำหรับส่งออก', 'info');
+    window.downloadRightsFinancialReport = function() {
+      const filtered = window.getFilteredRecords();
+      const selectedRights = window.getSelectedRights();
+      const calcMode = document.querySelector('input[name="calcMode"]:checked')?.value || 'specific';
+
+      const agg = {};
+      Object.values(CATEGORIES).forEach(cat => {
+        agg[cat.id] = {};
+        cat.fields.forEach(f => agg[cat.id][f] = 0);
+      });
+
+      let totalCash = 0;
+      filtered.forEach(r => {
+        totalCash += Number(r.total_cash) || 0;
+        ['uc', 'social', 'direct', 'self'].forEach(key => {
+          const d = safeJsonParse(r[key + '_data'], {});
+          Object.keys(d).forEach(f => {
+            if (agg[key][f] !== undefined) {
+              agg[key][f] += Number(d[f]) || 0;
+            }
+          });
+        });
+      });
+
+      const rightsMoney = { uc: 0, social: 0, direct: 0, self: 0 };
+      let grandTotalSpecificValue = 0;
+      let grandTotalAllValue = 0;
+
+      Object.keys(agg).forEach(catKey => {
+        Object.keys(agg[catKey]).forEach(field => {
+          if (field === 'ยอด IMC' || field === 'จ่ายยา') return;
+          const rate = ESTIMATED_RATES[field] || 0;
+          let val = agg[catKey][field] * rate;
+          if (catKey === 'direct' && (field === 'นวด+ประคบ (ไม่รวม IMC)' || field === 'หลังคลอด')) {
+            val += agg[catKey][field] * 61;
+          }
+          if (selectedRights.includes(catKey)) {
+            rightsMoney[catKey] += val;
+            grandTotalAllValue += val;
+            if (SPECIFIC_SERVICES.includes(field)) {
+              grandTotalSpecificValue += val;
+            }
+          }
+        });
+      });
+
+      const selectedProcedureValue = (calcMode === 'specific') ? grandTotalSpecificValue : grandTotalAllValue;
+      const combinedGrandTotal = selectedProcedureValue + totalCash;
+
+      let csvContent = "\uFEFFหัวข้อ,ประมาณการมูลค่า (บาท)\n";
+      csvContent += `"สิทธิบัตรทอง (UC)","${rightsMoney.uc.toFixed(2)}"\n`;
+      csvContent += `"สิทธิประกันสังคม","${rightsMoney.social.toFixed(2)}"\n`;
+      csvContent += `"สิทธิจ่ายตรง","${rightsMoney.direct.toFixed(2)}"\n`;
+      csvContent += `"สิทธิชำระเงินเอง/อื่นๆ","${rightsMoney.self.toFixed(2)}"\n`;
+      csvContent += `"รวมมูลค่าชดเชยสิทธิที่เลือก","${selectedProcedureValue.toFixed(2)}"\n`;
+      csvContent += `"เงินสดรับจริงรวม","${totalCash.toFixed(2)}"\n`;
+      csvContent += `"ยอดสรุปรวมทั้งสิ้น (มูลค่าบริการ + เงินสด)","${combinedGrandTotal.toFixed(2)}"\n`;
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', `Summary_Rights_Financial_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      window.showToast('ดาวน์โหลดสรุปมูลค่าเรียบร้อยแล้ว', 'success');
+    };
+
+    window.downloadProcedureBreakdownReport = function() {
+      const filtered = window.getFilteredRecords();
+      const selectedRights = window.getSelectedRights();
+
+      const agg = {};
+      Object.values(CATEGORIES).forEach(cat => {
+        agg[cat.id] = {};
+        cat.fields.forEach(f => agg[cat.id][f] = 0);
+      });
+
+      filtered.forEach(r => {
+        ['uc', 'social', 'direct', 'self'].forEach(key => {
+          const d = safeJsonParse(r[key + '_data'], {});
+          Object.keys(d).forEach(f => {
+            if (agg[key][f] !== undefined) {
+              agg[key][f] += Number(d[f]) || 0;
+            }
+          });
+        });
+      });
+
+      let csvContent = "\uFEFFหัตถการ/บริการ,บัตรทอง (UC),ประกันสังคม,จ่ายตรง,ชำระเงินเอง/อื่นๆ,รวมทุกสิทธิ\n";
+      ALL_PROCEDURES.forEach(proc => {
+        const countUC = agg.uc[proc] || 0;
+        const countSocial = agg.social[proc] || 0;
+        const countDirect = agg.direct[proc] || 0;
+        const countSelf = agg.self[proc] || 0;
+        const totalProc = (selectedRights.includes('uc') ? countUC : 0) +
+                          (selectedRights.includes('social') ? countSocial : 0) +
+                          (selectedRights.includes('direct') ? countDirect : 0) +
+                          (selectedRights.includes('self') ? countSelf : 0);
+
+        csvContent += `"${proc}","${countUC}","${countSocial}","${countDirect}","${countSelf}","${totalProc}"\n`;
+      });
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', `Summary_Procedure_Breakdown_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      window.showToast('ดาวน์โหลดจำแนกหัตถการเรียบร้อยแล้ว', 'success');
+    };
+
+    window.downloadAnalyticsChartImage = function() {
+      const canvas = document.getElementById('analytics-chart');
+      if (!canvas) {
+        window.showToast('ไม่พบกราฟวิเคราะห์', 'info');
         return;
       }
 
-      let csvContent = "\uFEFF"; // UTF-8 BOM
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = canvas.width;
+      tempCanvas.height = canvas.height;
+      const ctx = tempCanvas.getContext('2d');
+
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+      ctx.drawImage(canvas, 0, 0);
+
+      const imageURI = tempCanvas.toDataURL('image/png');
+      const link = document.createElement('a');
+      link.setAttribute('href', imageURI);
+      link.setAttribute('download', `Thai_Medicine_Analytics_Chart_${new Date().toISOString().split('T')[0]}.png`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      window.showToast('ดาวน์โหลดรูปภาพกราฟเรียบร้อยแล้ว', 'success');
+    };
+
+    window.exportToCSV = function() {
+      const filtered = window.getFilteredRecords();
+      if (filtered.length === 0) {
+        window.showToast('ไม่มีข้อมูลสำหรับส่งออก', 'info');
+        return;
+      }
+
+      let csvContent = "\uFEFF";
       csvContent += "วันที่,ช่วงเวลา,เงินสดรับจริง,ข้อมูลสิทธิบัตรทอง,ข้อมูลประกันสังคม,ข้อมูลจ่ายตรง,ข้อมูลชำระเอง\n";
 
       filtered.forEach(r => {
@@ -1470,35 +2013,18 @@ function responseJSON(obj) {
       link.click();
       document.body.removeChild(link);
 
-      showToast('ดาวน์โหลดไฟล์ CSV เรียบร้อยแล้ว', 'success');
-    }
+      window.showToast('ดาวน์โหลดไฟล์ CSV เรียบร้อยแล้ว', 'success');
+    };
 
-    // Toast Manager
-    function showToast(msg, type = 'success') {
-      const t = document.getElementById('toast');
-      const icon = document.getElementById('toast-icon');
-      const text = document.getElementById('toast-text');
+    document.addEventListener('DOMContentLoaded', async () => {
+      window.loadState();
+      window.buildCategoryForms();
+      window.setQuickDate('today');
 
-      if (!t || !icon || !text) return;
-
-      text.textContent = msg;
-
-      if (type === 'success') {
-        icon.innerHTML = `<svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>`;
-      } else {
-        icon.innerHTML = `<svg class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+      // Auto-fetch from Google Sheets on app startup if configured
+      if (webAppUrl) {
+        window.fetchFromGoogleSheets(true);
       }
-
-      t.classList.remove('hidden');
-      setTimeout(() => {
-        t.classList.add('hidden');
-      }, 3000);
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-      loadState();
-      buildCategoryForms();
-      setQuickDate('today');
     });
   </script>
 </body>
