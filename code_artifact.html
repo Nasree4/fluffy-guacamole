@@ -613,8 +613,9 @@
   <script>
     const LOCAL_STORAGE_KEY = 'thai_med_records_v3';
     const GOOGLE_SHEETS_CONFIG_KEY = 'thai_med_sheets_config_v3';
+    const DEFAULT_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbx3wUbiPKgCCuzqVLFKCNxx55jTxscnH_GYAPTrcDFBDDjTL3YmgtvDH9__xJWyxXJ2GQ/exec';
 
-    let webAppUrl = '';
+    let webAppUrl = DEFAULT_WEB_APP_URL;
 
     /* Safe JSON Parsing Helper to prevent SyntaxError */
     function safeJsonParse(str, fallback = {}) {
@@ -1006,7 +1007,12 @@ function doPost(e) {
           const cfg = safeJsonParse(sheetsConfig, {});
           if (cfg && cfg.webAppUrl) {
             webAppUrl = cfg.webAppUrl;
+          } else {
+            webAppUrl = DEFAULT_WEB_APP_URL;
           }
+        } else {
+          webAppUrl = DEFAULT_WEB_APP_URL;
+          localStorage.setItem(GOOGLE_SHEETS_CONFIG_KEY, JSON.stringify({ webAppUrl: DEFAULT_WEB_APP_URL }));
         }
       } catch (e) {
         console.error('Error loading state:', e);
